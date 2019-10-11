@@ -687,6 +687,7 @@ void ProbitClass::state_sweep(size_t tree_ind, size_t M, matrix<double> &residua
     return;
 }
 
+
 //////////////////////////////////////////////////////////////////////////////////////
 //
 //
@@ -694,3 +695,81 @@ void ProbitClass::state_sweep(size_t tree_ind, size_t M, matrix<double> &residua
 //
 //
 //////////////////////////////////////////////////////////////////////////////////////
+
+//////////////////////////////////////////////////////////////////////////////////////
+//
+//
+//  DenistyRegression Model
+//
+//
+//////////////////////////////////////////////////////////////////////////////////////
+
+
+double DensityModel::density(std::vector<double> x_vec) const
+{
+    double tau = this->tau;
+    std::vector<double> x_prior = this->prior;
+    size_t h;
+    size_t n_p = x_prior.size();
+    size_t n_obs = x_vec.size();
+    // For now, N = number of prior obs + number of obs in the node + 1
+    // Otherwise rho_h = 0 for the last observation.
+    size_t N = n_p + n_obs + 1;
+    std::vector<double> x_density(x_vec.size());
+    double eta_n, rho_h, nu_n1, nu_n2, nu_n, mu_n, sigma_n, temp, x;
+    eta_n = nu_n1 = nu_n2 = 1;
+
+    for (size_t h = 1; h <= n_p; h++)
+    {
+        rho_h = double (N-h) / double(N-h+1);
+        eta_n = eta_n / rho_h;
+        nu_n1 = nu_n1 * (2-rho_h) / pow(rho_h, 2);
+        nu_n2 = nu_n2 * pow(rho_h, -2);
+    }
+    nu_n = nu_n1 - nu_n2;
+    mu_n = 2*log(eta_n - 1) - 0.5*log(nu_n + pow(eta_n - 1, 2));
+    sigma_n = sqrt(log( 1 + nu_n / pow(eta_n - 1, 2)));
+    h = n_p;
+
+    std::cout << "rho_h " << rho_h << endl;
+    std::cout << "eta_n " << eta_n << endl;
+    std::cout << "nu_n1 " << nu_n1 << endl;
+    std::cout << "nu_n2 " << nu_n1 << endl;
+    std::cout << "nu_n " << nu_n << endl;
+    std::cout << "mu_n " << mu_n << endl;
+    std::cout << "sigma_n " << sigma_n << endl;
+
+    for (size_t i = 0; i < n_obs; i++)
+    {
+        std::cout << "x_vec, i " << i << endl;
+        x = x_vec[i];
+        std::cout << "x " << x << endl;
+        temp = density_single(x, x_prior, tau, mu_n, sigma_n);
+        std::cout << "temp " << temp << endl;
+        x_density[i] = temp;
+
+        h++;
+        rho_h = double (N-h) / double(N-h+1);
+        eta_n *= 1 / rho_h;
+        nu_n1 *= (2-rho_h) / pow(rho_h, 2);
+        nu_n2 *= pow(rho_h, -2);
+        nu_n = nu_n1 - nu_n2;
+        mu_n = 2*log(eta_n - 1) - 0.5*log(nu_n + pow(eta_n - 1, 2));
+        sigma_n = sqrt(log( 1 + nu_n / pow(eta_n - 1, 2)));
+        x_prior.push_back(x);
+        std::cout << "h " << h << endl;
+        std::cout << "rho_h " << rho_h << endl;
+        std::cout << "eta_n " << eta_n << endl;
+        std::cout << "nu_n1 " << nu_n1 << endl;
+        std::cout << "nu_n2 " << nu_n1 << endl;
+        std::cout << "nu_n " << nu_n << endl;
+        std::cout << "mu_n " << mu_n << endl;
+        std::cout << "sigma_n " << sigma_n << endl;
+            
+    }
+
+    double output = 0;
+    for (size_t i = 0; i < n_obs; i++) { output += log(x_density[i]);}
+    return output;
+    
+}

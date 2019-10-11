@@ -1376,7 +1376,7 @@ void calculate_likelihood_no_split(std::vector<double> &loglike, size_t &N_Xorde
 
     loglike[loglike.size() - 1] = model->likelihood(tree_pointer->suff_stat, tree_pointer->suff_stat, loglike.size() - 1, false, true, state) + log(pow(1.0 + tree_pointer->getdepth(), model->beta) / model->alpha - 1.0) + log((double)loglike.size() - 1.0) + log(model->getNoSplitPenality());
   
-//cout << loglike << endl;
+    //cout << loglike << endl;
     // then adjust according to number of variables and split points
 
     ////////////////////////////////////////////////////////////////
@@ -1613,6 +1613,708 @@ void getThetaForObs_Outsample_ave(matrix<double> &output, std::vector<tree> &tre
     }
 
     return;
+}
+
+void tree::grow_from_root_density(std::unique_ptr<State> &state, matrix<size_t> &Xorder_std, std::vector<size_t> &X_counts, std::vector<size_t> &X_num_unique, Model *model, std::unique_ptr<X_struct> &x_struct, const size_t &sweeps, const size_t &tree_ind, bool update_theta, bool update_split_prob, bool grow_new_tree)
+{
+    // grow a tree, users can control number of split points
+    size_t N_Xorder = Xorder_std[0].size();
+    size_t p = Xorder_std.size();
+    size_t ind;
+    size_t split_var;
+    size_t split_point;
+
+    this->N = N_Xorder;
+
+    // tau is prior VARIANCE, do not take squares
+
+    if (update_theta)
+    {
+        model->samplePars(state, this->suff_stat, this->theta_vector, this->prob_leaf);
+    }
+
+    if (N_Xorder <= state->n_min)
+    {
+        return;
+    }
+
+    if (this->depth >= state->max_depth - 1)
+    {
+        return;
+    }
+
+    bool no_split = false;
+
+    std::vector<size_t> subset_vars(p);
+
+    if (state->use_all)
+    {
+        std::iota(subset_vars.begin(), subset_vars.end(), 0);
+    }
+    else
+    {
+        if (state->sample_weights_flag)
+        {
+            std::vector<double> weight_samp(p);
+            double weight_sum;
+
+            // Sample Weights Dirchelet
+            for (size_t i = 0; i < p; i++)
+            {
+                std::gamma_distribution<double> temp_dist(state->mtry_weight_current_tree[i], 1.0);
+                weight_samp[i] = temp_dist(state->gen);
+            }
+            weight_sum = accumulate(weight_samp.begin(), weight_samp.end(), 0.0);
+            for (size_t i = 0; i < p; i++)
+            {
+                weight_samp[i] = weight_samp[i] / weight_sum;
+            }
+
+            subset_vars = sample_int_ccrank(p, state->mtry, weight_samp, state->gen);
+        }
+        else
+        {
+            subset_vars = sample_int_ccrank(p, state->mtry, state->mtry_weight_current_tree, state->gen);
+        }
+    }
+
+    // BART_likelihood_all(Xorder_std, no_split, split_var, split_point, subset_vars, X_counts, X_num_unique, model, x_struct, state, this, update_split_prob);
+    density_all(Xorder_std, no_split, split_var, split_point, subset_vars, X_counts, X_num_unique, model, x_struct, state, this, update_split_prob);
+
+    // cout << suff_stat << endl;
+
+    this->loglike_node = model->likelihood(this->suff_stat, this->suff_stat, 1, false, true, state);
+
+    if (no_split == true)
+    {
+        if (!update_split_prob)
+        {
+            for (size_t i = 0; i < N_Xorder; i++)
+            {
+                x_struct->data_pointers[tree_ind][Xorder_std[0][i]] = &this->theta_vector;
+            }
+        }
+
+        if (update_theta)
+        {
+            model->samplePars(state, this->suff_stat, this->theta_vector, this->prob_leaf);
+        }
+
+        this->l = 0;
+        this->r = 0;
+
+        // update leaf prob, for MH update useage
+        // this->loglike_node = model->likelihood_no_split(this->suff_stat, state);
+
+        return;
+    }
+
+    if (grow_new_tree)
+    {
+        // If GROW FROM ROOT MODE
+        this->v = split_var;
+        this->c = *(state->X_std + state->n_y * split_var + Xorder_std[split_var][split_point]);
+    }
+
+    // Update Cutpoint to be a true seperating point
+    // Increase split_point (index) until it is no longer equal to cutpoint value
+    while ((split_point < N_Xorder - 1) && (*(state->X_std + state->n_y * split_var + Xorder_std[split_var][split_point + 1]) == this->c))
+    {
+        split_point = split_point + 1;
+    }
+
+    // If our current split is same as parent, exit
+    if ((this->p) && (this->v == (this->p)->v) && (this->c == (this->p)->c))
+    {
+        return;
+    }
+
+    if (grow_new_tree)
+    {
+        // If do not update split prob ONLY
+        // grow from root, initialize new nodes
+
+        state->split_count_current_tree[split_var] += 1;
+
+        tree::tree_p lchild = new tree(model->getNumClasses(), this, model->dim_suffstat);
+        tree::tree_p rchild = new tree(model->getNumClasses(), this, model->dim_suffstat);
+
+        this->l = lchild;
+        this->r = rchild;
+
+        lchild->depth = this->depth + 1;
+        rchild->depth = this->depth + 1;
+
+        lchild->ID = 2 * (this->ID);
+        rchild->ID = lchild->ID + 1;
+    }
+    else
+    {
+        // For MH update usage, update probability of cutpoints given new data
+        // Do not need to initialize new nodes
+    }
+
+    this->l->ini_suff_stat();
+    this->r->ini_suff_stat();
+
+    matrix<size_t> Xorder_left_std;
+    matrix<size_t> Xorder_right_std;
+    ini_xinfo_sizet(Xorder_left_std, split_point + 1, p);
+    ini_xinfo_sizet(Xorder_right_std, N_Xorder - split_point - 1, p);
+
+    std::vector<size_t> X_num_unique_left(X_num_unique.size());
+    std::vector<size_t> X_num_unique_right(X_num_unique.size());
+
+    std::vector<size_t> X_counts_left(X_counts.size());
+    std::vector<size_t> X_counts_right(X_counts.size());
+
+    if (state->p_categorical > 0)
+    {
+        split_xorder_std_categorical(Xorder_left_std, Xorder_right_std, split_var, split_point, Xorder_std, X_counts_left, X_counts_right, X_num_unique_left, X_num_unique_right, X_counts, model, x_struct, state, this);
+    }
+
+    if (state->p_continuous > 0)
+    {
+        split_xorder_std_continuous(Xorder_left_std, Xorder_right_std, split_var, split_point, Xorder_std, model, x_struct, state, this);
+    }
+
+    this->l->grow_from_root_density(state, Xorder_left_std, X_counts_left, X_num_unique_left, model, x_struct, sweeps, tree_ind, update_theta, update_split_prob, grow_new_tree);
+
+    this->r->grow_from_root_density(state, Xorder_right_std, X_counts_right, X_num_unique_right, model, x_struct, sweeps, tree_ind, update_theta, update_split_prob, grow_new_tree);
+
+    return;
+}
+
+void density_all(matrix<size_t> &Xorder_std, bool &no_split, size_t &split_var, size_t &split_point, const std::vector<size_t> &subset_vars, std::vector<size_t> &X_counts, std::vector<size_t> &X_num_unique, Model *model, std::unique_ptr<X_struct> &x_struct, std::unique_ptr<State> &state, tree *tree_pointer, bool update_split_prob)
+{
+
+    // if update_split_prob == true, only update split prob based on given split point, for MH update usage
+
+    // compute BART posterior (loglikelihood + logprior penalty)
+
+    // subset_vars: a vector of indexes of varibles to consider (like random forest)
+
+    // use stacked vector loglike instead of a matrix, stacked by column
+    // length of loglike is p * (N - 1) + 1
+    // N - 1 has to be greater than 2 * Nmin
+
+    size_t N = Xorder_std[0].size();
+    size_t p = Xorder_std.size();
+    size_t ind;
+    size_t N_Xorder = N;
+    size_t total_categorical_split_candidates = 0;
+
+    // double sigma2 = pow(sigma, 2);
+
+    double loglike_max = -INFINITY;
+
+    std::vector<double> loglike;
+
+    size_t loglike_start;
+
+    // decide lenght of loglike vector
+    if (N <= state->n_cutpoints + 1 + 2 * state->n_min)
+    {
+        // cout << "small set " << endl;
+        loglike.resize((N_Xorder - 1) * state->p_continuous + x_struct->X_values.size() + 1, -INFINITY);
+        loglike_start = (N_Xorder - 1) * state->p_continuous;
+    }
+    else
+    {
+        // cout << "bigger set " << endl;
+        loglike.resize(state->n_cutpoints * state->p_continuous + x_struct->X_values.size() + 1, -INFINITY);
+        loglike_start = state->n_cutpoints * state->p_continuous;
+    }
+
+    // calculate for each cases
+    if (state->p_continuous > 0)
+    {
+        calculate_density_continuous(loglike, subset_vars, N_Xorder, Xorder_std, loglike_max, model, x_struct, state, tree_pointer);
+    }
+
+    if (state->p_categorical > 0)
+    {
+        calculate_density_categorical(loglike, loglike_start, subset_vars, N_Xorder, Xorder_std, loglike_max, X_counts, X_num_unique, model, x_struct, total_categorical_split_candidates, state, tree_pointer);
+    }
+
+    // calculate likelihood of no-split option
+    calculate_density_no_split(Xorder_std, loglike, N_Xorder, loglike_max, model, x_struct, total_categorical_split_candidates, state, tree_pointer);
+
+    // transfer loglikelihood to likelihood
+    for (size_t ii = 0; ii < loglike.size(); ii++)
+    {
+        // if a variable is not selected, take exp will becomes 0
+        loglike[ii] = exp(loglike[ii] - loglike_max);
+    }
+    // cout << "loglike " << loglike << endl;
+    // cout << " ok " << endl;
+
+    // sampling cutpoints
+    if (N <= state->n_cutpoints + 1 + 2 * state->n_min)
+    {
+
+        // N - 1 - 2 * Nmin <= Ncutpoints, consider all data points
+
+        // if number of observations is smaller than Ncutpoints, all data are splitpoint candidates
+        // note that the first Nmin and last Nmin cannot be splitpoint candidate
+
+        if ((N - 1) > 2 * state->n_min)
+        {
+            // for(size_t i = 0; i < p; i ++ ){
+            for (auto &&i : subset_vars)
+            {
+                if (i < state->p_continuous)
+                {
+                    // delete some candidates, otherwise size of the new node can be smaller than Nmin
+                    std::fill(loglike.begin() + i * (N - 1), loglike.begin() + i * (N - 1) + state->n_min + 1, 0.0);
+                    std::fill(loglike.begin() + i * (N - 1) + N - 2 - state->n_min, loglike.begin() + i * (N - 1) + N - 2 + 1, 0.0);
+                }
+            }
+        }
+        else
+        {
+            // do not use all continuous variables
+            std::fill(loglike.begin(), loglike.begin() + (N_Xorder - 1) * state->p_continuous - 1, 0.0);
+        }
+
+        std::discrete_distribution<> d(loglike.begin(), loglike.end());
+
+        // for MH update usage only
+        tree_pointer->num_cutpoint_candidates = count_non_zero(loglike);
+
+        if (update_split_prob)
+        {
+            ind = tree_pointer->drawn_ind;
+        }
+        else
+        {
+            // sample one index of split point
+            ind = d(state->gen);
+            tree_pointer->drawn_ind = ind;
+        }
+
+        // save the posterior of the chosen split point
+        vec_sum(loglike, tree_pointer->prob_split);
+        tree_pointer->prob_split = loglike[ind] / tree_pointer->prob_split;
+
+        if (ind == loglike.size() - 1)
+        {
+            // no split
+            no_split = true;
+            split_var = 0;
+            split_point = 0;
+        }
+        else if ((N - 1) <= 2 * state->n_min)
+        {
+            // np split
+
+            /////////////////////////////////
+            //
+            // Need optimization, move before calculating likelihood
+            //
+            /////////////////////////////////
+
+            no_split = true;
+            split_var = 0;
+            split_point = 0;
+        }
+        else if (ind < loglike_start)
+        {
+            // split at continuous variable
+            split_var = ind / (N - 1);
+            split_point = ind % (N - 1);
+        }
+        else
+        {
+            // split at categorical variable
+            size_t start;
+            ind = ind - loglike_start;
+            for (size_t i = 0; i < (x_struct->variable_ind.size() - 1); i++)
+            {
+                if (x_struct->variable_ind[i] <= ind && x_struct->variable_ind[i + 1] > ind)
+                {
+                    split_var = i;
+                }
+            }
+            start = x_struct->variable_ind[split_var];
+            // count how many
+            split_point = std::accumulate(X_counts.begin() + start, X_counts.begin() + ind + 1, 0);
+            // minus one for correct index (start from 0)
+            split_point = split_point - 1;
+            split_var = split_var + state->p_continuous;
+        }
+    }
+    else
+    {
+        // use adaptive number of cutpoints
+
+        std::vector<size_t> candidate_index(state->n_cutpoints);
+
+        seq_gen_std(state->n_min, N - state->n_min, state->n_cutpoints, candidate_index);
+
+        std::discrete_distribution<size_t> d(loglike.begin(), loglike.end());
+
+        // For MH update usage only
+        tree_pointer->num_cutpoint_candidates = count_non_zero(loglike);
+
+        if (update_split_prob)
+        {
+            ind = tree_pointer->drawn_ind;
+        }
+        else
+        {
+            // // sample one index of split point
+            ind = d(state->gen);
+            tree_pointer->drawn_ind = ind;
+        }
+
+        // save the posterior of the chosen split point
+        vec_sum(loglike, tree_pointer->prob_split);
+        tree_pointer->prob_split = loglike[ind] / tree_pointer->prob_split;
+
+        if (ind == loglike.size() - 1)
+        {
+            // no split
+            no_split = true;
+            split_var = 0;
+            split_point = 0;
+        }
+        else if (ind < loglike_start)
+        {
+            // split at continuous variable
+            split_var = ind / state->n_cutpoints;
+            split_point = candidate_index[ind % state->n_cutpoints];
+        }
+        else
+        {
+            // split at categorical variable
+            size_t start;
+            ind = ind - loglike_start;
+            for (size_t i = 0; i < (x_struct->variable_ind.size() - 1); i++)
+            {
+                if (x_struct->variable_ind[i] <= ind && x_struct->variable_ind[i + 1] > ind)
+                {
+                    split_var = i;
+                }
+            }
+            start = x_struct->variable_ind[split_var];
+            // count how many
+            split_point = std::accumulate(X_counts.begin() + start, X_counts.begin() + ind + 1, 0);
+            // minus one for correct index (start from 0)
+            split_point = split_point - 1;
+            split_var = split_var + state->p_continuous;
+        }
+    }
+
+    return;
+}
+
+void calculate_density_continuous(std::vector<double> &loglike, const std::vector<size_t> &subset_vars, size_t &N_Xorder, matrix<size_t> &Xorder_std, double &loglike_max, Model *model, std::unique_ptr<X_struct> &x_struct, std::unique_ptr<State> &state, tree *tree_pointer)
+{
+
+    size_t N = N_Xorder;
+
+    std::vector<double> temp_suff_stat(model->dim_suffstat);
+    std::vector<double> temp_suff_stat2(model->dim_suffstat);
+
+    if (N_Xorder <= state->n_cutpoints + 1 + 2 * state->n_min)
+    {
+        // if we only have a few data observations in current node
+        // use all of them as cutpoint candidates
+
+        double n1tau;
+        double n2tau;
+        // double Ntau = N_Xorder * model->tau;
+
+        // to have a generalized function, have to pass an empty candidate_index object for this case
+        // is there any smarter way to do it?
+        std::vector<size_t> candidate_index(1);
+
+        for (auto &&i : subset_vars)
+        {
+            if (i < state->p_continuous)
+            {
+                std::vector<size_t> &xorder = Xorder_std[i];
+
+                // // initialize sufficient statistics
+                // std::fill(temp_suff_stat.begin(), temp_suff_stat.end(), 0.0);
+
+                // ////////////////////////////////////////////////////////////////
+                // //
+                // //  This part can be run in parallel, just like continuous case below, Ncutpoint case
+                // //
+                // //  If run in parallel, need to redefine model class for each thread
+                // //
+                // ////////////////////////////////////////////////////////////////
+
+
+                // copy residuals from state->residual_std for the data in this node
+                // For now, the order of the residuals depends on the variable in X_order_std
+                std::vector<double> left_vec;
+                std::vector<double> right_vec;
+                // the number of indexes in xorder should equal to suff_stat[2] in this node
+                cout << "number of indexes: " << xorder.size() << endl;
+                cout << "suff_stat[2]: " << tree_pointer->suff_stat[2] << endl;
+                for (size_t j = 0; j < tree_pointer->suff_stat[2]; j++)
+                {
+                    right_vec.push_back(state->residual_std[0][xorder[j]]);
+                }
+
+                for (size_t j = 0; j < N_Xorder - 1; j++)
+                {
+                    // calcSuffStat_continuous(temp_suff_stat, xorder, candidate_index, j, false, model, state);
+
+                    // loglike[(N_Xorder - 1) * i + j] = model->likelihood(temp_suff_stat, tree_pointer->suff_stat, j, true, false, state) + model->likelihood(temp_suff_stat, tree_pointer->suff_stat, j, false, false, state);
+
+                    left_vec.push_back(right_vec.back());
+                    right_vec.pop_back();
+
+                    loglike[(N_Xorder - 1) * i + j] =  model->density(left_vec) + model->density(right_vec);
+
+                    if (loglike[(N_Xorder - 1) * i + j] > loglike_max)
+                    {
+                        loglike_max = loglike[(N_Xorder - 1) * i + j];
+                    }
+                }
+            }
+        }
+    }
+    else
+    {
+
+        // otherwise, adaptive number of cutpoints
+        // use Ncutpoints
+
+        std::vector<size_t> candidate_index2(state->n_cutpoints + 1);
+        seq_gen_std2(state->n_min, N - state->n_min, state->n_cutpoints, candidate_index2);
+
+        // double Ntau = N_Xorder * model->tau;
+
+        std::mutex llmax_mutex;
+
+        for (auto &&i : subset_vars)
+        {
+            if (i < state->p_continuous)
+            {
+
+                // Lambda callback to perform the calculation
+                auto calcllc_i = [i, &loglike, &loglike_max, &Xorder_std, &state, &candidate_index2, &model, &llmax_mutex, N_Xorder, &tree_pointer]() {
+                    std::vector<size_t> &xorder = Xorder_std[i];
+                    double llmax = -INFINITY;
+
+                    // copy residuals from state->residual_std for the data in this node
+                    // For now, the order of the residuals depends on the variable in X_order_std
+                    std::vector<double> left_vec;
+                    std::vector<double> right_vec;
+                    // the number of indexes in xorder should equal to suff_stat[2] in this node
+                    cout << "number of indexes: " << xorder.size() << endl;
+                    cout << "suff_stat[2]: " << tree_pointer->suff_stat[2] << endl;
+                    for (size_t j = 0; j < tree_pointer->suff_stat[2]; j++)
+                    {
+                        right_vec.push_back(state->residual_std[0][xorder[j]]);
+                    }
+
+                    // std::vector<double> temp_suff_stat(model->dim_suffstat);
+                    // std::fill(temp_suff_stat.begin(), temp_suff_stat.end(), 0.0);
+
+                    for (size_t j = 0; j < state->n_cutpoints; j++)
+                    {
+
+                        for (size_t q = candidate_index2[j] + 1; q <= candidate_index2[j + 1]; q++)
+                        {
+                            left_vec.push_back(right_vec.back());
+                            right_vec.pop_back();
+                        }
+
+                        loglike[(state->n_cutpoints) * i + j] =  model->density(left_vec) + model->density(right_vec);
+                        
+                        // calcSuffStat_continuous(temp_suff_stat, xorder, candidate_index2, j, true, model, state);
+                        
+                        if (loglike[(state->n_cutpoints) * i + j] > llmax)
+                        {
+                            llmax = loglike[(state->n_cutpoints) * i + j];
+                        }
+                    }
+                    llmax_mutex.lock();
+                    if (llmax > loglike_max)
+                        loglike_max = llmax;
+                    llmax_mutex.unlock();
+                };
+
+                if (thread_pool.is_active())
+                    thread_pool.add_task(calcllc_i);
+                else
+                    calcllc_i();
+            }
+        }
+        if (thread_pool.is_active())
+            thread_pool.wait();
+    }
+}
+
+void calculate_density_categorical(std::vector<double> &loglike, size_t &loglike_start, const std::vector<size_t> &subset_vars, size_t &N_Xorder, matrix<size_t> &Xorder_std, double &loglike_max, std::vector<size_t> &X_counts, std::vector<size_t> &X_num_unique, Model *model, std::unique_ptr<X_struct> &x_struct, size_t &total_categorical_split_candidates, std::unique_ptr<State> &state, tree *tree_pointer)
+{
+
+    // loglike_start is an index to offset
+    // consider loglikelihood start from loglike_start
+
+    size_t start;
+    size_t end;
+    size_t end2;
+    double y_cumsum = 0.0;
+    size_t n1;
+    size_t n2;
+    size_t temp;
+    size_t N = N_Xorder;
+
+    size_t effective_cutpoints = 0;
+
+    std::vector<double> temp_suff_stat(model->dim_suffstat);
+
+    for (auto &&i : subset_vars)
+    {
+
+        // COUT << "variable " << i << endl;
+        if ((i >= state->p_continuous) && (X_num_unique[i - state->p_continuous] > 1))
+        {
+            // more than one unique values
+            start = x_struct->variable_ind[i - state->p_continuous];
+            end = x_struct->variable_ind[i + 1 - state->p_continuous] - 1; // minus one for indexing starting at 0
+            end2 = end;
+
+            while (X_counts[end2] == 0)
+            {
+                // move backward if the last unique value has zero counts
+                end2 = end2 - 1;
+                // COUT << end2 << endl;
+            }
+            // move backward again, do not consider the last unique value as cutpoint
+            end2 = end2 - 1;
+
+            y_cumsum = 0.0;
+            //model -> suff_stat_fill(0.0); // initialize sufficient statistics
+            std::fill(temp_suff_stat.begin(), temp_suff_stat.end(), 0.0);
+
+            ////////////////////////////////////////////////////////////////
+            //
+            //  This part can be run in parallel, just like continuous case
+            //
+            //  If run in parallel, need to redefine model class for each thread
+            //
+            ////////////////////////////////////////////////////////////////
+
+            n1 = 0;
+            // copy residuals from state->residual_std for the data in this node
+            // For now, the order of the residuals depends on the variable in X_order_std
+            std::vector<double> left_vec;
+            std::vector<double> right_vec;
+            // the number of indexes in xorder should equal to suff_stat[2] in this node
+            cout << "number of indexes: " << Xorder_std[i].size() << endl;
+            cout << "suff_stat[2]: " << tree_pointer->suff_stat[2] << endl;
+            for (size_t j = 0; j < tree_pointer->suff_stat[2]; j++)
+            {
+                right_vec.push_back(state->residual_std[0][Xorder_std[i][j]]);
+            }
+
+            for (size_t j = start; j <= end2; j++)
+            {
+
+                if (X_counts[j] != 0)
+                {
+
+                    temp = n1 + X_counts[j] - 1;
+
+                    // modify sufficient statistics vector directly inside model class
+                    // model->calcSuffStat_categorical(temp_suff_stat, state->residual_std, Xorder_std, n1, temp, i);
+                    // calcSuffStat_categorical(temp_suff_stat, Xorder_std[i], n1, temp, model, state);
+                    for (size_t q = n1; q <= temp; q++)
+                    {
+                        left_vec.push_back(right_vec.back());
+                        right_vec.pop_back();
+                    }
+
+                    n1 = n1 + X_counts[j];
+                    // n1tau = (double)n1 * model->tau;
+                    // n2tau = ntau - n1tau;
+
+                    // loglike[loglike_start + j] = model->likelihood(model->tau, n1tau, sigma2, y_sum, true) + model->likelihood(model->tau, n2tau, sigma2, y_sum, false);
+                    // loglike[loglike_start + j] = model->likelihood(temp_suff_stat, tree_pointer->suff_stat, n1 - 1, true, false, state) + model->likelihood(temp_suff_stat, tree_pointer->suff_stat, n1 - 1, false, false, state);
+                    loglike[loglike_start + j] = model->density(left_vec) + model->density(right_vec);
+
+                    // count total number of cutpoint candidates
+                    effective_cutpoints++;
+
+                    if (loglike[loglike_start + j] > loglike_max)
+                    {
+                        loglike_max = loglike[loglike_start + j];
+                    }
+                }
+            }
+        }
+    }
+}
+
+void calculate_density_no_split(matrix<size_t> &Xorder_std, std::vector<double> &loglike, size_t &N_Xorder, double &loglike_max, Model *model, std::unique_ptr<X_struct> &x_struct, size_t &total_categorical_split_candidates, std::unique_ptr<State> &state, tree *tree_pointer)
+{
+     
+    // loglike[loglike.size() - 1] = model->likelihood(tree_pointer->suff_stat, tree_pointer->suff_stat, loglike.size() - 1, false, true, state) + log(pow(1.0 + tree_pointer->getdepth(), model->beta) / model->alpha - 1.0) + log((double)loglike.size() - 1.0) + log(model->getNoSplitPenality());
+    
+    // ! For now, calculate the density for no split in the order of the first variable in Xorder_std.
+    std::vector<double> resid;
+    for (size_t j = 0; j < N_Xorder; j++)
+    {
+        resid.push_back(state->residual_std[0][Xorder_std[0][j]]);
+    }
+    loglike[loglike.size() - 1] = model->density(resid);
+    //cout << loglike << endl;
+    // then adjust according to number of variables and split points
+
+    ////////////////////////////////////////////////////////////////
+    //
+    //  For now, I didn't test much weights, but set it as p * Ncutpoints for all cases
+    //
+    //  BE CAREFUL, p is total number of variables, p = p_continuous + p_categorical
+    //
+    //  We might want to scale by mtry, the actual number of variables used in the current fit
+    //
+    //  WARNING, you need to consider weighting for both continuous and categorical variables here
+    //
+    //  This is the only function calculating no-split likelihood
+    //
+    ////////////////////////////////////////////////////////////////
+
+    // loglike[loglike.size() - 1] += log(state->p) + log(2.0) + model->getNoSplitPenality();
+
+    ////////////////////////////////////////////////////////////////
+    // The loop below might be useful when test different weights
+
+    // if (p_continuous > 0)
+    // {
+    //     // if using continuous variable
+    //     if (N_Xorder <= Ncutpoints + 1 + 2 * Nmin)
+    //     {
+    //         loglike[loglike.size() - 1] += log(p) + log(Ncutpoints);
+    //     }
+    //     else
+    //     {
+    //         loglike[loglike.size() - 1] += log(p) + log(Ncutpoints);
+    //     }
+    // }
+
+    // if (p > p_continuous)
+    // {
+    //     COUT << "total_categorical_split_candidates  " << total_categorical_split_candidates << endl;
+    //     // if using categorical variables
+    //     // loglike[loglike.size() - 1] += log(total_categorical_split_candidates);
+    // }
+
+    // loglike[loglike.size() - 1] += log(p - p_continuous) + log(Ncutpoints);
+
+    // this is important, update maximum of loglike vector
+    if (loglike[loglike.size() - 1] > loglike_max)
+    {
+        loglike_max = loglike[loglike.size() - 1];
+    }
 }
 
 #ifndef NoRcpp

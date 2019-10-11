@@ -75,6 +75,8 @@ public:
 
     virtual Model *clone() { return nullptr; };
 
+    virtual double density(std::vector<double> x_vec) const {return 0.0;};
+
     // Getters and Setters
     // num classes
     size_t getNumClasses() const { return dim_theta; };
@@ -517,7 +519,37 @@ public:
     void predict_std(const double *Xtestpointer, size_t N_test, size_t p, size_t num_trees, size_t num_sweeps, matrix<double> &yhats_test_xinfo, vector<vector<tree>> &trees, std::vector<double> &output_vec);
 };
 
+class DensityModel : public NormalModel
+{
+public:
+    size_t dim_suffstat = 1;
 
+    // normal model prior
+    double kap;
+    double s;
+    // prior on leaf parameter
+    double tau;
+    // prior data
+    std::vector<double> prior;
+    
+    DensityModel(double kap, double s, double tau, double alpha, double beta, std::vector<double> prior) : NormalModel(kap, s, tau, alpha, beta)
+    {
+        this->kap = kap;
+        this->s = s;
+        this->tau = tau;
+        this->alpha = alpha;
+        this->beta = beta;
+        this->dim_residual = 1;
+        this->prior = prior;
+    }
+        
+    // DensityModel() : NormalModel(1, 3) {}
+
+    // Model *clone() { return new DensityModel(*this); }
+
+    double density(std::vector<double> x_vec) const;
+
+};
 
 
 
