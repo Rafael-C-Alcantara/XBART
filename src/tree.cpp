@@ -1683,16 +1683,25 @@ void tree::grow_from_root_density(std::unique_ptr<State> &state, matrix<size_t> 
 
     // cout << suff_stat << endl;
 
-    this->loglike_node = model->likelihood(this->suff_stat, this->suff_stat, 1, false, true, state);
+    // this->loglike_node = model->likelihood(this->suff_stat, this->suff_stat, 1, false, true, state);
 
     if (no_split == true)
     {
         if (!update_split_prob)
         {
+            double resid = state->residual_std[0][Xorder_std[0][0]];
+            double min_resid = resid;
+            double max_resid = resid;
             for (size_t i = 0; i < N_Xorder; i++)
             {
                 x_struct->data_pointers[tree_ind][Xorder_std[0][i]] = &this->theta_vector;
+                resid = state->residual_std[0][Xorder_std[0][i]];
+                this->node_obs.push_back(resid);
+                if (resid < min_resid){min_resid = resid;}
+                else if (resid > max_resid){max_resid = resid;}
             }
+            this->min_resid = min_resid;
+            this->max_resid = max_resid;
         }
 
         if (update_theta)
@@ -2317,5 +2326,26 @@ void calculate_density_no_split(matrix<size_t> &Xorder_std, std::vector<double> 
     }
 }
 
+void getDensityForObs_Outsample(matrix<double> &output, std::vector<tree> &tree, size_t x_index, const double *Xtest, size_t N_Xtest, size_t p)
+{
+    // get theta of ONE observation of ALL trees, out sample fit
+    // input is a pointer to testing set matrix because it is out of sample
+    // tree is a vector of all trees
+
+    // output should have dimension (dim_theta, num_trees)
+
+    tree::tree_p bn; // pointer to bottom node
+    
+    for (size_t i = 0; i < tree.size(); i++)
+    {
+        // loop over trees
+        // tree search
+        bn = tree[i].search_bottom_std(Xtest, x_index, p, N_Xtest);
+        output[i] = bn->theta_vector;
+    }
+    return;
+}
+
 #ifndef NoRcpp
 #endif
+

@@ -46,7 +46,13 @@ public:
     // std::vector<double> theta_vector;
     std::vector<double> theta_vector;
 
+    std::vector<double> node_obs; //observations in the bottom node;
+
     std::vector<double> suff_stat;
+
+    // can be put in suff_sta
+    double min_resid;
+    double max_resid;
 
     //typedefs--------------------
     typedef tree *tree_p;
