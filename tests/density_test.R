@@ -1,24 +1,24 @@
 #######################################################################
 # set parameters of XBART
 get_XBART_params <- function(y) {
-    XBART_params = list(num_trees = 1, # number of trees 
-                      num_sweeps = 1, # number of sweeps (samples of the forest)
+    # XBART_params = list(num_trees = 1, # number of trees 
+    #                   num_sweeps = 1, # number of sweeps (samples of the forest)
+    #                   n_min = 1, # minimal node size
+    #                   alpha = 0.95, # BART prior parameter 
+    #                   beta = 1.25, # BART prior parameter
+    #                   mtry = 10, # number of variables sampled in each split
+    #                   burnin = 0,
+    #                   no_split_penality = "Auto"
+    #                   ) # burnin of MCMC sample
+  XBART_params = list(num_trees = 15, # number of trees 
+                      num_sweeps = 10, # number of sweeps (samples of the forest)
                       n_min = 1, # minimal node size
                       alpha = 0.95, # BART prior parameter 
                       beta = 1.25, # BART prior parameter
                       mtry = 10, # number of variables sampled in each split
-                      burnin = 0,
+                      burnin = 5,
                       no_split_penality = "Auto"
                       ) # burnin of MCMC sample
-  # XBART_params = list(num_trees = 20, # number of trees 
-  #                     num_sweeps = 30, # number of sweeps (samples of the forest)
-  #                     n_min = 1, # minimal node size
-  #                     alpha = 0.95, # BART prior parameter 
-  #                     beta = 1.25, # BART prior parameter
-  #                     mtry = 10, # number of variables sampled in each split
-  #                     burnin = 10,
-  #                     no_split_penality = "Auto"
-  #                     ) # burnin of MCMC sample
   num_tress = XBART_params$num_trees
   XBART_params$max_depth = 250
   XBART_params$num_cutpoints = 50;
@@ -44,8 +44,8 @@ verbose = TRUE # print the progress on screen
 
 
 if (small_case) {
-  n = 1000 # size of training set
-  nt = 500 # size of testing set
+  n = 500 # size of training set
+  nt = 100 # size of testing set
   d = 4 # number of TOTAL variables
   dcat = 4 # number of categorical variables
   # must be d >= dcat

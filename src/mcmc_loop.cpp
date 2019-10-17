@@ -717,10 +717,8 @@ void mcmc_loop_density(matrix<size_t> &Xorder_std, bool verbose, matrix<double> 
             {
                 state->mtry_weight_current_tree = state->mtry_weight_current_tree - state->split_count_all_tree[tree_ind];
             }
-            std::cout << "state y_mean " << state->ini_var_yhat << endl;
-            std::cout << "trees.suff_stat " << trees[sweeps][tree_ind].suff_stat.size() << endl; 
             model->initialize_root_suffstat(state, trees[sweeps][tree_ind].suff_stat);
-            cout << "grow_from _root" << endl;
+
             trees[sweeps][tree_ind].grow_from_root_density(state, Xorder_std, x_struct->X_counts, x_struct->X_num_unique, model, x_struct, sweeps, tree_ind, true, false, true);
 
             state->update_split_counts(tree_ind);
