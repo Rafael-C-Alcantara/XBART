@@ -1742,6 +1742,7 @@ void tree::grow_from_root_density(std::unique_ptr<State> &state, matrix<size_t> 
     {
         // If do not update split prob ONLY
         // grow from root, initialize new nodes
+        cout << "grow_new_tree"  << endl;
 
         state->split_count_current_tree[split_var] += 1;
 
