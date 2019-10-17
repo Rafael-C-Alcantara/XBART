@@ -44,10 +44,10 @@ verbose = TRUE # print the progress on screen
 
 
 if (small_case) {
-  n = 10000 # size of training set
-  nt = 5000 # size of testing set
-  d = 7 # number of TOTAL variables
-  dcat = 7 # number of categorical variables
+  n = 1000 # size of training set
+  nt = 500 # size of testing set
+  d = 4 # number of TOTAL variables
+  dcat = 4 # number of categorical variables
   # must be d >= dcat
   # (X_continuous, X_categorical), 10 and 10 for each case, 20 in total
 } else {
@@ -92,7 +92,8 @@ if (new_data) {
   }
 
   f = function(x) {
-    sin(rowSums(x[, 3:4] ^ 2)) + sin(rowSums(x[, 1:2] ^ 2)) + (x[, 5] + x[, 6]) ^ 2 * (x[, 1] + x[, 2] ^ 2) / (3 + x[, 3] + x[, 4] ^ 2)
+    sin(rowSums(x[, 3:4] ^ 2)) + sin(rowSums(x[, 1:2] ^ 2)) + (x[, 1] + x[, 2] ^ 2) / (3 + x[, 3] + x[, 4] ^ 2)
+    # sin(rowSums(x[, 3:4] ^ 2)) + sin(rowSums(x[, 1:2] ^ 2)) + (x[, 5] + x[, 6]) ^ 2 * (x[, 1] + x[, 2] ^ 2) / (3 + x[, 3] + x[, 4] ^ 2)
     #rowSums(x[,1:30]^2)
     #pmax(x[,1]*x[,2], abs(x[,3])*(x[,10]>x[,15])+abs(x[,4])*(x[,10]<=x[,15]))
     #
