@@ -2326,25 +2326,52 @@ void calculate_density_no_split(matrix<size_t> &Xorder_std, std::vector<double> 
     }
 }
 
-void getDensityForObs_Outsample(matrix<double> &output, std::vector<tree> &tree, size_t x_index, const double *Xtest, size_t N_Xtest, size_t p)
-{
-    // get theta of ONE observation of ALL trees, out sample fit
-    // input is a pointer to testing set matrix because it is out of sample
-    // tree is a vector of all trees
 
-    // output should have dimension (dim_theta, num_trees)
 
-    tree::tree_p bn; // pointer to bottom node
-    
-    for (size_t i = 0; i < tree.size(); i++)
-    {
-        // loop over trees
-        // tree search
-        bn = tree[i].search_bottom_std(Xtest, x_index, p, N_Xtest);
-        output[i] = bn->theta_vector;
-    }
-    return;
-}
+// void getDensityForObs_Outsample(matrix<double> &output, std::vector<tree> &tree, size_t x_index, const double *Xtest, size_t N_Xtest, size_t p)
+// {
+//     // get theta of ONE observation of ALL trees, out sample fit
+//     // input is a pointer to testing set matrix because it is out of sample
+//     // tree is a vector of all trees
+
+//     // output should have dimension (dim_theta, num_trees)
+
+//     tree::tree_p bn; // pointer to bottom node
+//     size_t n = 100; // simulate points 
+//     std::vector<double> x(n);
+//     for (size_t i = 0; i < tree.size(); i++)
+//     {
+//         // loop over trees
+//         // tree search
+//         bn = tree[i].search_bottom_std(Xtest, x_index, p, N_Xtest);
+        
+//     }
+//     return;
+// }
+
+// void density_estimation(const double *Xtestpointer, size_t N_test, size_t p, size_t num_trees, size_t num_sweeps, matrix<double> &yhats_test_xinfo, vector<vector<tree>> &trees)
+// {
+
+//     matrix<double> output;
+
+//     // row : dimension of theta, column : number of trees
+//     ini_matrix(output, this->dim_theta, trees[0].size());
+
+//     for (size_t sweeps = 0; sweeps < num_sweeps; sweeps++)
+//     {
+//         for (size_t data_ind = 0; data_ind < N_test; data_ind++)
+//         {
+//             getDensityForObs_Outsample(output, trees[sweeps], data_ind, Xtestpointer, N_test, p);
+
+//             // take sum of predictions of each tree, as final prediction
+//             for (size_t i = 0; i < trees[0].size(); i++)
+//             {
+//                 yhats_test_xinfo[sweeps][data_ind] += output[i][0];
+//             }
+//         }
+//     }
+//     return;
+// // }
 
 #ifndef NoRcpp
 #endif

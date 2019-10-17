@@ -242,3 +242,14 @@ size_t count_non_zero(std::vector<double> &vec)
     }
     return output;
 }
+
+
+void ini_seq(std::vector<double> &x, double &begin, double &end)
+{
+    size_t n = x.size();
+    double step = (end - begin) / double(n-1);
+    for (size_t i = 0; i < n; i++)
+    {
+        x[i] = begin + i*step;
+    }
+}

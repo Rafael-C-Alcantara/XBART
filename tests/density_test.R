@@ -1,15 +1,24 @@
 #######################################################################
 # set parameters of XBART
 get_XBART_params <- function(y) {
-  XBART_params = list(num_trees = 20, # number of trees 
-                      num_sweeps = 30, # number of sweeps (samples of the forest)
+    XBART_params = list(num_trees = 1, # number of trees 
+                      num_sweeps = 1, # number of sweeps (samples of the forest)
                       n_min = 1, # minimal node size
                       alpha = 0.95, # BART prior parameter 
                       beta = 1.25, # BART prior parameter
                       mtry = 10, # number of variables sampled in each split
-                      burnin = 10,
+                      burnin = 0,
                       no_split_penality = "Auto"
                       ) # burnin of MCMC sample
+  # XBART_params = list(num_trees = 20, # number of trees 
+  #                     num_sweeps = 30, # number of sweeps (samples of the forest)
+  #                     n_min = 1, # minimal node size
+  #                     alpha = 0.95, # BART prior parameter 
+  #                     beta = 1.25, # BART prior parameter
+  #                     mtry = 10, # number of variables sampled in each split
+  #                     burnin = 10,
+  #                     no_split_penality = "Auto"
+  #                     ) # burnin of MCMC sample
   num_tress = XBART_params$num_trees
   XBART_params$max_depth = 250
   XBART_params$num_cutpoints = 50;

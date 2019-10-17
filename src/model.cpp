@@ -741,9 +741,7 @@ double DensityModel::density(std::vector<double> x_vec) const
 
     for (size_t i = 0; i < n_obs; i++)
     {
-        std::cout << "x_vec, i " << i << endl;
         x = x_vec[i];
-        std::cout << "x " << x << endl;
         temp = density_single(x, x_prior, tau, mu_n, sigma_n);
         // std::cout << "density " << temp << endl;
         x_density[i] = temp;
