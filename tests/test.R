@@ -67,7 +67,8 @@ if (new_data) {
       x = cbind(x, matrix(as.numeric(sample(-2:2, dcat * n, replace = TRUE)), n, dcat))
     }
   } else {
-    x = matrix(as.numeric(sample(-2:2, dcat * n, replace = TRUE)), n, dcat)
+    # x = matrix(as.numeric(sample(-2:2, dcat * n, replace = TRUE)), n, dcat)
+    x = matrix(as.numeric(sample(0:1, dcat * n, replace = TRUE)), n, dcat)
   }
 
 
@@ -77,7 +78,8 @@ if (new_data) {
       xtest = cbind(xtest, matrix(as.numeric(sample(-2:2, dcat * nt, replace = TRUE)), nt, dcat))
     }
   } else {
-    xtest = matrix(as.numeric(sample(-2:2, dcat * nt, replace = TRUE)), nt, dcat)
+    # xtest = matrix(as.numeric(sample(-2:2, dcat * nt, replace = TRUE)), nt, dcat)
+    xtest = matrix(as.numeric(sample(0:1, dcat * nt, replace = TRUE)), nt, dcat)
   }
 
   f = function(x) {

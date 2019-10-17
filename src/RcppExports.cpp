@@ -257,27 +257,6 @@ BEGIN_RCPP
 END_RCPP
 }
 
-static const R_CallMethodDef CallEntries[] = {
-    {"_XBART_xbart_predict", (DL_FUNC) &_XBART_xbart_predict, 3},
-    {"_XBART_r_to_json", (DL_FUNC) &_XBART_r_to_json, 2},
-    {"_XBART_json_to_r", (DL_FUNC) &_XBART_json_to_r, 1},
-    {"_XBART_sample_int_crank", (DL_FUNC) &_XBART_sample_int_crank, 3},
-    {"_XBART_sample_int_ccrank", (DL_FUNC) &_XBART_sample_int_ccrank, 3},
-    {"_XBART_sample_int_expj", (DL_FUNC) &_XBART_sample_int_expj, 3},
-    {"_XBART_sample_int_expjs", (DL_FUNC) &_XBART_sample_int_expjs, 3},
-    {"_XBART_XBART_cpp", (DL_FUNC) &_XBART_XBART_cpp, 22},
-    {"_XBART_XBART_CLT_cpp", (DL_FUNC) &_XBART_XBART_CLT_cpp, 22},
-    {"_XBART_XBART_multinomial_cpp", (DL_FUNC) &_XBART_XBART_multinomial_cpp, 23},
-    {"_XBART_XBART_Probit_cpp", (DL_FUNC) &_XBART_XBART_Probit_cpp, 22},
-    {"_XBART_XBART_MH_cpp", (DL_FUNC) &_XBART_XBART_MH_cpp, 22},
-    {NULL, NULL, 0}
-};
-
-RcppExport void R_init_XBART(DllInfo *dll) {
-    R_registerRoutines(dll, NULL, CallEntries, NULL, NULL);
-    R_useDynamicSymbols(dll, FALSE);
-}
-
 // XBART_density_cpp
 Rcpp::List XBART_density_cpp(arma::mat y, arma::mat X, arma::mat Xtest, arma::mat y_prior, size_t num_trees, size_t num_sweeps, size_t max_depth, size_t n_min, size_t num_cutpoints, double alpha, double beta, double tau, double no_split_penality, size_t burnin, size_t mtry, size_t p_categorical, double kap, double s, bool verbose, bool parallel, bool set_random_seed, size_t random_seed, bool sample_weights_flag);
 RcppExport SEXP _XBART_XBART_density_cpp(SEXP ySEXP, SEXP XSEXP, SEXP XtestSEXP, SEXP y_priorSEXP, SEXP num_treesSEXP, SEXP num_sweepsSEXP, SEXP max_depthSEXP, SEXP n_minSEXP, SEXP num_cutpointsSEXP, SEXP alphaSEXP, SEXP betaSEXP, SEXP tauSEXP, SEXP no_split_penalitySEXP, SEXP burninSEXP, SEXP mtrySEXP, SEXP p_categoricalSEXP, SEXP kapSEXP, SEXP sSEXP, SEXP verboseSEXP, SEXP parallelSEXP, SEXP set_random_seedSEXP, SEXP random_seedSEXP, SEXP sample_weights_flagSEXP) {
@@ -310,4 +289,26 @@ BEGIN_RCPP
     rcpp_result_gen = Rcpp::wrap(XBART_density_cpp(y, X, Xtest, y_prior, num_trees, num_sweeps, max_depth, n_min, num_cutpoints, alpha, beta, tau, no_split_penality, burnin, mtry, p_categorical, kap, s, verbose, parallel, set_random_seed, random_seed, sample_weights_flag));
     return rcpp_result_gen;
 END_RCPP
+}
+
+static const R_CallMethodDef CallEntries[] = {
+    {"_XBART_xbart_predict", (DL_FUNC) &_XBART_xbart_predict, 3},
+    {"_XBART_r_to_json", (DL_FUNC) &_XBART_r_to_json, 2},
+    {"_XBART_json_to_r", (DL_FUNC) &_XBART_json_to_r, 1},
+    {"_XBART_sample_int_crank", (DL_FUNC) &_XBART_sample_int_crank, 3},
+    {"_XBART_sample_int_ccrank", (DL_FUNC) &_XBART_sample_int_ccrank, 3},
+    {"_XBART_sample_int_expj", (DL_FUNC) &_XBART_sample_int_expj, 3},
+    {"_XBART_sample_int_expjs", (DL_FUNC) &_XBART_sample_int_expjs, 3},
+    {"_XBART_XBART_cpp", (DL_FUNC) &_XBART_XBART_cpp, 22},
+    {"_XBART_XBART_CLT_cpp", (DL_FUNC) &_XBART_XBART_CLT_cpp, 22},
+    {"_XBART_XBART_multinomial_cpp", (DL_FUNC) &_XBART_XBART_multinomial_cpp, 23},
+    {"_XBART_XBART_Probit_cpp", (DL_FUNC) &_XBART_XBART_Probit_cpp, 22},
+    {"_XBART_XBART_MH_cpp", (DL_FUNC) &_XBART_XBART_MH_cpp, 22},
+    {"_XBART_XBART_density_cpp", (DL_FUNC) &_XBART_XBART_density_cpp, 23},
+    {NULL, NULL, 0}
+};
+
+RcppExport void R_init_XBART(DllInfo *dll) {
+    R_registerRoutines(dll, NULL, CallEntries, NULL, NULL);
+    R_useDynamicSymbols(dll, FALSE);
 }

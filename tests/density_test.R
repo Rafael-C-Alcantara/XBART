@@ -1,13 +1,13 @@
 #######################################################################
 # set parameters of XBART
 get_XBART_params <- function(y) {
-  XBART_params = list(num_trees = 1, # number of trees 
-                      num_sweeps = 1, # number of sweeps (samples of the forest)
+  XBART_params = list(num_trees = 20, # number of trees 
+                      num_sweeps = 30, # number of sweeps (samples of the forest)
                       n_min = 1, # minimal node size
                       alpha = 0.95, # BART prior parameter 
                       beta = 1.25, # BART prior parameter
                       mtry = 10, # number of variables sampled in each split
-                      burnin = 15,
+                      burnin = 10,
                       no_split_penality = "Auto"
                       ) # burnin of MCMC sample
   num_tress = XBART_params$num_trees
@@ -31,14 +31,14 @@ parl = TRUE # parallel computing
 
 
 small_case = TRUE # run simulation on small data set
-verbose = FALSE # print the progress on screen
+verbose = TRUE # print the progress on screen
 
 
 if (small_case) {
   n = 10000 # size of training set
   nt = 5000 # size of testing set
-  d = 10 # number of TOTAL variables
-  dcat = 10 # number of categorical variables
+  d = 7 # number of TOTAL variables
+  dcat = 7 # number of categorical variables
   # must be d >= dcat
   # (X_continuous, X_categorical), 10 and 10 for each case, 20 in total
 } else {
@@ -67,7 +67,8 @@ if (new_data) {
       x = cbind(x, matrix(as.numeric(sample(-2:2, dcat * n, replace = TRUE)), n, dcat))
     }
   } else {
-    x = matrix(as.numeric(sample(-2:2, dcat * n, replace = TRUE)), n, dcat)
+    # x = matrix(as.numeric(sample(-2:2, dcat * n, replace = TRUE)), n, dcat)
+    x = matrix(as.numeric(sample(0:1, dcat * n, replace = TRUE)), n, dcat)
   }
 
 
@@ -77,11 +78,12 @@ if (new_data) {
       xtest = cbind(xtest, matrix(as.numeric(sample(-2:2, dcat * nt, replace = TRUE)), nt, dcat))
     }
   } else {
-    xtest = matrix(as.numeric(sample(-2:2, dcat * nt, replace = TRUE)), nt, dcat)
+    # xtest = matrix(as.numeric(sample(-2:2, dcat * nt, replace = TRUE)), nt, dcat)
+    xtest = matrix(as.numeric(sample(0:1, dcat * nt, replace = TRUE)), nt, dcat)
   }
 
   f = function(x) {
-    sin(rowSums(x[, 3:4] ^ 2)) + sin(rowSums(x[, 1:2] ^ 2)) + (x[, 15] + x[, 14]) ^ 2 * (x[, 1] + x[, 2] ^ 2) / (3 + x[, 3] + x[, 14] ^ 2)
+    sin(rowSums(x[, 3:4] ^ 2)) + sin(rowSums(x[, 1:2] ^ 2)) + (x[, 5] + x[, 6]) ^ 2 * (x[, 1] + x[, 2] ^ 2) / (3 + x[, 3] + x[, 4] ^ 2)
     #rowSums(x[,1:30]^2)
     #pmax(x[,1]*x[,2], abs(x[,3])*(x[,10]>x[,15])+abs(x[,4])*(x[,10]<=x[,15]))
     #
@@ -99,6 +101,8 @@ if (new_data) {
 
   y = ftrue + sigma * rnorm(n)
   y_test = ftest + sigma * rnorm(nt)
+  # sample prior from y
+  y_prior = y[sample(n, 10)]
 }
 
 #######################################################################
@@ -112,28 +116,31 @@ categ <- function(z, j) {
 
 params = get_XBART_params(y)
 time = proc.time()
-fit = XBART_density(as.matrix(y), as.matrix(x), as.matrix(xtest), p_categorical = dcat,
+fit = XBART.density(as.matrix(y), as.matrix(x), as.matrix(xtest), as.matrix(y_prior), p_categorical = dcat,
             params$num_trees, params$num_sweeps, params$max_depth,
             params$n_min, alpha = params$alpha, beta = params$beta, tau = params$tau, s = 1, kap = 1,
-            mtry = params$mtry, verbose = verbose,
+            mtry = params$mtry, verbose = verbose, burnin = params$burnin,
             num_cutpoints = params$num_cutpoints, parallel = parl, random_seed = 100, no_split_penality = params$no_split_penality)
 
 ################################
 # two ways to predict on testing set
 
 # 1. set xtest as input to main fitting function
-fhat.1 = apply(fit$yhats_test[, params$burnin:params$num_sweeps], 1, mean)
+# fhat.1 = apply(fit$yhats_test[, params$burnin:params$num_sweeps], 1, mean)
+fhat.1 = apply(fit$yhats_test, 1, mean)
 time = proc.time() - time
 print(time[3])
 
 # 2. a separate predict function
 pred = predict(fit, xtest)
-pred = rowMeans(pred[, params$burnin:params$num_sweeps])
+# pred = rowMeans(pred[, params$burnin:params$num_sweeps])
+pred = rowMeans(pred)
 
 time_XBART = round(time[3], 3)
 
 pred2 = predict(fit, xtest)
-pred2 = rowMeans(pred2[, params$burnin:params$num_sweeps])
+# pred2 = rowMeans(pred2[, params$burnin:params$num_sweeps])
+pred2 = rowMeans(pred2)
 stopifnot(pred == pred2)
 
 #######################################################################
@@ -187,4 +194,16 @@ print(paste("running time, XBART", time_XBART))
 stopifnot(xbart_rmse < 1)
 stopifnot(time_XBART < 5)
 
+# distribution of specific categories
+cat_match = function(x, cat){
+  if (length(x) != length(cat)){cat('dimension not match')}
+  return(all(x==cat))
+}
 
+cat1 = c(1, 0, 0, 0, 0, 0, 0)
+ind = apply(x, 1, cat_match, cat=cat1)
+indt = apply(xtest, 1, cat_match, cat=cat1)
+
+hist(y[ind], col='white')
+hist(y_test[indt], col='grey', add=T)
+box()
