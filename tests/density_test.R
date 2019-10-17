@@ -204,16 +204,16 @@ print(paste("running time, XBART", time_XBART))
 stopifnot(xbart_rmse < 1)
 stopifnot(time_XBART < 5)
 
-# distribution of specific categories
-cat_match = function(x, cat){
-  if (length(x) != length(cat)){cat('dimension not match')}
-  return(all(x==cat))
-}
+# # distribution of specific categories
+# cat_match = function(x, cat){
+#   if (length(x) != length(cat)){cat('dimension not match')}
+#   return(all(x==cat))
+# }
 
-cat1 = c(1, 0, 0, 0, 0, 0, 0)
-ind = apply(x, 1, cat_match, cat=cat1)
-indt = apply(xtest, 1, cat_match, cat=cat1)
+# cat1 = c(1, 0, 0, 0, 0, 0, 0)
+# ind = apply(x, 1, cat_match, cat=cat1)
+# indt = apply(xtest, 1, cat_match, cat=cat1)
 
-hist(y[ind], col='white')
-hist(y_test[indt], col='grey', add=T)
-box()
+# hist(y[ind], col='white')
+# hist(y_test[indt], col='grey', add=T)
+# box()

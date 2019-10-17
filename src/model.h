@@ -522,7 +522,7 @@ public:
 class DensityModel : public NormalModel
 {
 public:
-    size_t dim_suffstat = 1;
+    // size_t dim_suffstat = 1;
 
     // normal model prior
     double kap;
@@ -540,7 +540,7 @@ public:
         this->alpha = alpha;
         this->beta = beta;
         this->dim_residual = 1;
-        this->prior = prior;
+        this->prior = prior; // should devide by number of trees at some where.
     }
         
     // DensityModel() : NormalModel(1, 3) {}

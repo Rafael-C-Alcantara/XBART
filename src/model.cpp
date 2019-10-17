@@ -52,12 +52,17 @@ void NormalModel::update_state(std::unique_ptr<State> &state, size_t tree_ind, s
 
 void NormalModel::initialize_root_suffstat(std::unique_ptr<State> &state, std::vector<double> &suff_stat)
 {
+    cout << "inside initialize_root_suffstat" << endl;
     // sum of y
+    std::cout << "state->residual_std " << state->residual_std[0];
     suff_stat[0] = sum_vec(state->residual_std[0]);
+    std::cout << "suff_stat[0]" << suff_stat[0] << endl;
     // sum of y squared
     suff_stat[1] = sum_squared(state->residual_std[0]);
+    std::cout << "suff_stat[1]" << suff_stat[1] << endl;
     // number of observations in the node
     suff_stat[2] = state->n_y;
+    std::cout << "suff_stat[2]" << suff_stat[2] << endl;
     return;
 }
 

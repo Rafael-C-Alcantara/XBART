@@ -801,6 +801,7 @@ void split_xorder_std_categorical(matrix<size_t> &Xorder_left_std, matrix<size_t
 
     for (size_t i = state->p_continuous; i < state->p; i++)
     {
+        std::cout << "split on " << i << endl;
         // loop over variables
         left_ix = 0;
         right_ix = 0;
@@ -1742,7 +1743,6 @@ void tree::grow_from_root_density(std::unique_ptr<State> &state, matrix<size_t> 
     {
         // If do not update split prob ONLY
         // grow from root, initialize new nodes
-        cout << "grow_new_tree"  << endl;
 
         state->split_count_current_tree[split_var] += 1;
 
@@ -2063,8 +2063,8 @@ void calculate_density_continuous(std::vector<double> &loglike, const std::vecto
                 std::vector<double> left_vec;
                 std::vector<double> right_vec;
                 // the number of indexes in xorder should equal to suff_stat[2] in this node
-                cout << "number of indexes: " << xorder.size() << endl;
-                cout << "suff_stat[2]: " << tree_pointer->suff_stat[2] << endl;
+                // the number of indexes in xorder should equal to suff_stat[2] in this node
+                std::cout << "continuous " << xorder.size() << "=" << tree_pointer->suff_stat[2] << endl;
                 for (size_t j = 0; j < tree_pointer->suff_stat[2]; j++)
                 {
                     right_vec.push_back(state->residual_std[0][xorder[j]]);
@@ -2117,8 +2117,8 @@ void calculate_density_continuous(std::vector<double> &loglike, const std::vecto
                     std::vector<double> left_vec;
                     std::vector<double> right_vec;
                     // the number of indexes in xorder should equal to suff_stat[2] in this node
-                    cout << "number of indexes: " << xorder.size() << endl;
-                    cout << "suff_stat[2]: " << tree_pointer->suff_stat[2] << endl;
+                    // the number of indexes in xorder should equal to suff_stat[2] in this node
+                    std::cout << "continuous " << xorder.size() << "=" << tree_pointer->suff_stat[2] << endl;
                     for (size_t j = 0; j < tree_pointer->suff_stat[2]; j++)
                     {
                         right_vec.push_back(state->residual_std[0][xorder[j]]);
@@ -2219,8 +2219,7 @@ void calculate_density_categorical(std::vector<double> &loglike, size_t &loglike
             std::vector<double> left_vec;
             std::vector<double> right_vec;
             // the number of indexes in xorder should equal to suff_stat[2] in this node
-            cout << "number of indexes: " << Xorder_std[i].size() << endl;
-            cout << "suff_stat[2]: " << tree_pointer->suff_stat[2] << endl;
+            std::cout << "categorical " << Xorder_std[i].size() << "=" << tree_pointer->suff_stat[2] << endl;
             for (size_t j = 0; j < tree_pointer->suff_stat[2]; j++)
             {
                 right_vec.push_back(state->residual_std[0][Xorder_std[i][j]]);
