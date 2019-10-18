@@ -11,7 +11,7 @@ get_XBART_params <- function(y) {
     #                   no_split_penality = "Auto"
     #                   ) # burnin of MCMC sample
   XBART_params = list(num_trees = 1, # number of trees 
-                      num_sweeps = 4, # number of sweeps (samples of the forest)
+                      num_sweeps = 3, # number of sweeps (samples of the forest)
                       n_min = 1, # minimal node size
                       alpha = 0.95, # BART prior parameter 
                       beta = 1.25, # BART prior parameter
@@ -23,7 +23,7 @@ get_XBART_params <- function(y) {
   XBART_params$max_depth = 250
   XBART_params$num_cutpoints = 50;
   # number of adaptive cutpoints
-  XBART_params$tau = var(y) / num_tress # prior variance of mu (leaf parameter)
+  XBART_params$tau = 1 # var(y) / num_tress # prior variance of mu (leaf parameter)
   return(XBART_params)
 }
 

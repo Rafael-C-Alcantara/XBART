@@ -2342,6 +2342,7 @@ void getDensityForObs_Outsample(std::vector<double> &output, std::vector<tree> &
     bn = tree[0].search_bottom_std(Xtest, x_index, p, N_Xtest);
     ini_seq(x, bn->min_resid, bn->max_resid);
     density_vec(output, x, bn->node_obs, tau, false);
+    // std::cout << "suff_stat: " << bn->suff_stat[0] << " " << bn->suff_stat[1] << " " << bn->suff_stat[2] << endl;
         
     
     return;
