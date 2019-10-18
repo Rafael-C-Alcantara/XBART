@@ -136,7 +136,7 @@ double density_vec(std::vector<double> &x_vec, std::vector<double> &x_prior, dou
         nu_n = nu_n1 - nu_n2;
         mu_n = 2*log(eta_n - 1) - 0.5*log(nu_n + pow(eta_n - 1, 2));
         sigma_n = sqrt(log( 1 + nu_n / pow(eta_n - 1, 2)));
-        x_prior.push_back(x);
+        // x_prior.push_back(x);
     }
     if (take_log)
     {

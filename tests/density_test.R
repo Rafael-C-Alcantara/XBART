@@ -212,7 +212,7 @@ cat_match = function(x, cat){
 # xtest[1:4, ] = xtest[c(1, 4, 2, 3),]
 color = c("lightblue1","darkolivegreen1","lightpink1", "darkseagreen1")
 color_dark = c("blue", "green", "red", "darkseagreen4")
-h <- hist(y, plot=FALSE)
+h <- hist(y, plot=FALSE, breaks = 15)
 h$counts=h$counts/sum(h$counts)
 plot(h, main = "", xlim = c(min(y), max(y)), ylim = c(0, 0.5))
 color_ind=1
@@ -222,7 +222,7 @@ for (test_ind in 1:nrow(xtest)){
   indt = apply(xtest, 1, cat_match, cat=cat1)
   
   # plot.new()
-  h <- hist(y[ind], plot=FALSE)
+  h <- hist(y[ind], plot=FALSE, breaks = 15)
   h$counts=h$counts/sum(h$counts)
   plot(h, main = "", xlim = c(min(y), max(y)), col=color[color_ind], add=TRUE)
   # abline(v = ftest[indt], col = 'red')
@@ -231,34 +231,34 @@ for (test_ind in 1:nrow(xtest)){
 }
 for (test_ind in 1:nrow(xtest))
 {
-  lines(x = seq(min(y), max(y), length.out=100), y = exp(fit$yhats_test[test_ind, 1, ]), type = 'l', col=color_dark[test_ind])
+  lines(x = seq(-2, 4, length.out=100), y = exp(fit$yhats_test[test_ind, 1, ]), type = 'l', col=color_dark[test_ind])
 }
 
 
-library(PBDE)
-tau=0.01
-y_test = as.matrix(seq(min(y), max(y), length.out=n))
-density_x2_1_x1_0 = density_x2_1_x1_1 = density_x2_0 = rep(n, 0)
-for (i in 1:length(y_test)){
-  density_x2_1_x1_0[i] = exp(p_n(as.matrix(y_test[i]), as.matrix(y[x[,1]==0&x[,2]==1]),tau,TRUE)[[1]])
-  density_x2_1_x1_1[i] = exp(p_n(as.matrix(y_test[i]), as.matrix(y[x[,2]==1&x[,1]==1]),tau,TRUE)[[1]])
-  density_x2_0[i] = exp(p_n(as.matrix(y_test[i]), as.matrix(y[x[,2]==0]), tau,TRUE)[[1]])
-}
-h <- hist(y, plot=FALSE)
-h$counts=h$counts/sum(h$counts)
-plot(h, main = toString(tau), ylim = c(0, 0.5))
-h <- hist(y[x[,2]==0], plot=FALSE)
-h$counts=h$counts/sum(h$counts)
-plot(h, main = toString(tau), col = "lightpink1", add=T)
-h <- hist(y[x[,1]==0&x[,2]==1], plot=FALSE)
-h$counts=h$counts/sum(h$counts)
-plot(h, main = toString(tau), col = "darkolivegreen1", add=T)
-h <- hist(y[x[,1]==1&x[,2]==1], plot=FALSE)
-h$counts=h$counts/sum(h$counts)
-plot(h, main = toString(tau), col = "lightskyblue1", add=T)
-lines(y_test, density_x2_1_x1_0, type = 'l', col = "green")
-lines(y_test, density_x2_1_x1_1, type = 'l', col = 'blue')
-lines(y_test, density_x2_0, type = 'l', col = 'red')
+# library(PBDE)
+# tau=0.01
+# y_test = as.matrix(seq(min(y), max(y), length.out=n))
+# density_x2_1_x1_0 = density_x2_1_x1_1 = density_x2_0 = rep(n, 0)
+# for (i in 1:length(y_test)){
+#   density_x2_1_x1_0[i] = exp(p_n(as.matrix(y_test[i]), as.matrix(y[x[,1]==0&x[,2]==1]),tau,TRUE)[[1]])
+#   density_x2_1_x1_1[i] = exp(p_n(as.matrix(y_test[i]), as.matrix(y[x[,2]==1&x[,1]==1]),tau,TRUE)[[1]])
+#   density_x2_0[i] = exp(p_n(as.matrix(y_test[i]), as.matrix(y[x[,2]==0]), tau,TRUE)[[1]])
+# }
+# h <- hist(y, plot=FALSE)
+# h$counts=h$counts/sum(h$counts)
+# plot(h, main = toString(tau), ylim = c(0, 0.5))
+# h <- hist(y[x[,2]==0], plot=FALSE)
+# h$counts=h$counts/sum(h$counts)
+# plot(h, main = toString(tau), col = "lightpink1", add=T)
+# h <- hist(y[x[,1]==0&x[,2]==1], plot=FALSE)
+# h$counts=h$counts/sum(h$counts)
+# plot(h, main = toString(tau), col = "darkolivegreen1", add=T)
+# h <- hist(y[x[,1]==1&x[,2]==1], plot=FALSE)
+# h$counts=h$counts/sum(h$counts)
+# plot(h, main = toString(tau), col = "lightskyblue1", add=T)
+# lines(y_test, density_x2_1_x1_0, type = 'l', col = "green")
+# lines(y_test, density_x2_1_x1_1, type = 'l', col = 'blue')
+# lines(y_test, density_x2_0, type = 'l', col = 'red')
 
 
 

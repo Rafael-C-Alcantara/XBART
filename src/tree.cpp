@@ -2342,7 +2342,11 @@ void getDensityForObs_Outsample(std::vector<double> &output, std::vector<tree> &
     size_t sim_n = 100; // simulate points 
     std::vector<double> x(sim_n);
     bn = tree[0].search_bottom_std(Xtest, x_index, p, N_Xtest);
-    ini_seq(x, bn->min_resid, bn->max_resid);
+    double begin = -2.0;
+    double end = 4.0;
+    ini_seq(x, begin, end);
+    // ini_seq(x, bn->min_resid, bn->max_resid);
+    // std::cout << "sim_x " << x << endl;
     // std::cout << "bn->obs " << bn->node_obs << endl;
     // initialize parameter, need double check!!
     std::vector<double> x_temp(1);
