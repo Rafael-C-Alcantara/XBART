@@ -34,7 +34,7 @@ double test_f(double x, void * params);
 
 double density_single(double x, std::vector<double> x_vec, double tau, double mu, double sigma);
 
-void density_vec(std::vector<double> &output, std::vector<double> x_vec, std::vector<double> x_prior, double tau, bool take_log);
+double density_vec(std::vector<double> &x_vec, std::vector<double> &x_prior, double &tau, bool take_log);
 
 double test_d();
 

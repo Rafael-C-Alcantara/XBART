@@ -1700,6 +1700,7 @@ void tree::grow_from_root_density(std::unique_ptr<State> &state, matrix<size_t> 
                 if (resid < min_resid){min_resid = resid;}
                 else if (resid > max_resid){max_resid = resid;}
             }
+            std::cout << "num obs " << this->node_obs.size() << endl; 
             this->min_resid = min_resid;
             this->max_resid = max_resid;
         }
@@ -1834,7 +1835,6 @@ void density_all(matrix<size_t> &Xorder_std, bool &no_split, size_t &split_var, 
         loglike.resize(state->n_cutpoints * state->p_continuous + x_struct->X_values.size() + 1, -INFINITY);
         loglike_start = state->n_cutpoints * state->p_continuous;
     }
-
     // calculate for each cases
     if (state->p_continuous > 0)
     {
@@ -1855,6 +1855,7 @@ void density_all(matrix<size_t> &Xorder_std, bool &no_split, size_t &split_var, 
         // if a variable is not selected, take exp will becomes 0
         loglike[ii] = exp(loglike[ii] - loglike_max);
     }
+    std::cout << "loglike " << loglike << endl;
     // cout << "loglike " << loglike << endl;
     // cout << " ok " << endl;
 
@@ -2012,6 +2013,9 @@ void density_all(matrix<size_t> &Xorder_std, bool &no_split, size_t &split_var, 
             // minus one for correct index (start from 0)
             split_point = split_point - 1;
             split_var = split_var + state->p_continuous;
+            
+            std::cout << "split_var " << split_var << endl;
+            std::cout << "split_point " << split_point << endl;
         }
     }
 
@@ -2183,7 +2187,6 @@ void calculate_density_categorical(std::vector<double> &loglike, size_t &loglike
     for (auto &&i : subset_vars)
     {
 
-        // COUT << "variable " << i << endl;
         if ((i >= state->p_continuous) && (X_num_unique[i - state->p_continuous] > 1))
         {
             // more than one unique values
@@ -2227,7 +2230,6 @@ void calculate_density_categorical(std::vector<double> &loglike, size_t &loglike
 
             for (size_t j = start; j <= end2; j++)
             {
-
                 if (X_counts[j] != 0)
                 {
 
@@ -2337,11 +2339,18 @@ void getDensityForObs_Outsample(std::vector<double> &output, std::vector<tree> &
     // output should have dimension (dim_theta, num_trees)
 
     tree::tree_p bn; // pointer to bottom node
-    size_t n = 100; // simulate points 
-    std::vector<double> x(n);
+    size_t sim_n = 100; // simulate points 
+    std::vector<double> x(sim_n);
     bn = tree[0].search_bottom_std(Xtest, x_index, p, N_Xtest);
     ini_seq(x, bn->min_resid, bn->max_resid);
-    density_vec(output, x, bn->node_obs, tau, false);
+    // std::cout << "bn->obs " << bn->node_obs << endl;
+    // initialize parameter, need double check!!
+    std::vector<double> x_temp(1);
+    for (size_t i = 0; i < sim_n; i++)
+    {
+        x_temp[0] = x[i];
+        output[i] = density_vec(x_temp, bn->node_obs, tau, true);
+    }
     // std::cout << "suff_stat: " << bn->suff_stat[0] << " " << bn->suff_stat[1] << " " << bn->suff_stat[2] << endl;
         
     

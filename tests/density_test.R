@@ -11,7 +11,7 @@ get_XBART_params <- function(y) {
     #                   no_split_penality = "Auto"
     #                   ) # burnin of MCMC sample
   XBART_params = list(num_trees = 1, # number of trees 
-                      num_sweeps = 3, # number of sweeps (samples of the forest)
+                      num_sweeps = 1, # number of sweeps (samples of the forest)
                       n_min = 1, # minimal node size
                       alpha = 0.95, # BART prior parameter 
                       beta = 1.25, # BART prior parameter
@@ -23,7 +23,7 @@ get_XBART_params <- function(y) {
   XBART_params$max_depth = 250
   XBART_params$num_cutpoints = 50;
   # number of adaptive cutpoints
-  XBART_params$tau = 1 # var(y) / num_tress # prior variance of mu (leaf parameter)
+  XBART_params$tau = 0.01 # var(y) / num_tress # prior variance of mu (leaf parameter)
   return(XBART_params)
 }
 
@@ -44,10 +44,10 @@ verbose = TRUE # print the progress on screen
 
 
 if (small_case) {
-  n = 500 # size of training set
+  n = 200 # size of training set
   nt = 100 # size of testing set
-  d = 3 # number of TOTAL variables
-  dcat = 3 # number of categorical variables
+  d = 2 # number of TOTAL variables
+  dcat = 2 # number of categorical variables
   # must be d >= dcat
   # (X_continuous, X_categorical), 10 and 10 for each case, 20 in total
 } else {
@@ -209,6 +209,13 @@ cat_match = function(x, cat){
   return(all(x==cat))
 }
 
+# xtest[1:4, ] = xtest[c(1, 4, 2, 3),]
+color = c("lightblue1","darkolivegreen1","lightpink1", "darkseagreen1")
+color_dark = c("blue", "green", "red", "darkseagreen4")
+h <- hist(y, plot=FALSE)
+h$counts=h$counts/sum(h$counts)
+plot(h, main = "", xlim = c(min(y), max(y)), ylim = c(0, 0.5))
+color_ind=1
 for (test_ind in 1:nrow(xtest)){
   cat1 = xtest[test_ind, ]
   ind = apply(x, 1, cat_match, cat=cat1)
@@ -217,21 +224,42 @@ for (test_ind in 1:nrow(xtest)){
   # plot.new()
   h <- hist(y[ind], plot=FALSE)
   h$counts=h$counts/sum(h$counts)
-  plot(h, main = "", xlim = c(min(y), max(y)))
-  # hist(y_test[indt], col='grey', add=T, freq = F)
-  for (i in 1:params$num_sweeps){
-    lines(x = seq(min(y), max(y), length.out=100), y = fit$yhats_test[test_ind, i, ], type = 'l')
-  }
-  abline(v = f(as.data.frame(t(cat1))), col = 'red')
-  title(toString(cat1))
-  box()
+  plot(h, main = "", xlim = c(min(y), max(y)), col=color[color_ind], add=TRUE)
+  # abline(v = ftest[indt], col = 'red')
+  # title(toString(cat1))
+  color_ind = color_ind+1
+}
+for (test_ind in 1:nrow(xtest))
+{
+  lines(x = seq(min(y), max(y), length.out=100), y = exp(fit$yhats_test[test_ind, 1, ]), type = 'l', col=color_dark[test_ind])
 }
 
-plot(x = seq(min(y), max(y), length.out=100), y = fit$yhats_test[test_ind, i, ], type = 'l',
-                ylim=c(0, 0.25), xlim = c(min(y), max(y)))
-for (test_ind in 1:nrow(xtest)){
-  cat1 = xtest[test_ind, ]
-  ind = apply(x, 1, cat_match, cat=cat1)
-  indt = apply(xtest, 1, cat_match, cat=cat1)
-  lines(x = seq(min(y), max(y), length.out=100), y = fit$yhats_test[test_ind, i, ], type = 'l')
+
+library(PBDE)
+tau=0.01
+y_test = as.matrix(seq(min(y), max(y), length.out=n))
+density_x2_1_x1_0 = density_x2_1_x1_1 = density_x2_0 = rep(n, 0)
+for (i in 1:length(y_test)){
+  density_x2_1_x1_0[i] = exp(p_n(as.matrix(y_test[i]), as.matrix(y[x[,1]==0&x[,2]==1]),tau,TRUE)[[1]])
+  density_x2_1_x1_1[i] = exp(p_n(as.matrix(y_test[i]), as.matrix(y[x[,2]==1&x[,1]==1]),tau,TRUE)[[1]])
+  density_x2_0[i] = exp(p_n(as.matrix(y_test[i]), as.matrix(y[x[,2]==0]), tau,TRUE)[[1]])
 }
+h <- hist(y, plot=FALSE)
+h$counts=h$counts/sum(h$counts)
+plot(h, main = toString(tau), ylim = c(0, 0.5))
+h <- hist(y[x[,2]==0], plot=FALSE)
+h$counts=h$counts/sum(h$counts)
+plot(h, main = toString(tau), col = "lightpink1", add=T)
+h <- hist(y[x[,1]==0&x[,2]==1], plot=FALSE)
+h$counts=h$counts/sum(h$counts)
+plot(h, main = toString(tau), col = "darkolivegreen1", add=T)
+h <- hist(y[x[,1]==1&x[,2]==1], plot=FALSE)
+h$counts=h$counts/sum(h$counts)
+plot(h, main = toString(tau), col = "lightskyblue1", add=T)
+lines(y_test, density_x2_1_x1_0, type = 'l', col = "green")
+lines(y_test, density_x2_1_x1_1, type = 'l', col = 'blue')
+lines(y_test, density_x2_0, type = 'l', col = 'red')
+
+
+
+

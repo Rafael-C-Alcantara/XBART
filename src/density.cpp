@@ -100,15 +100,14 @@ double test_f(double x, void * params)
         return output;
     }
 
-void density_vec(std::vector<double> &output, std::vector<double> x_vec, std::vector<double> x_prior, double tau, bool take_log)
+double density_vec(std::vector<double> &x_vec, std::vector<double> &x_prior, double &tau, bool take_log)
 {
 
     size_t h;
     size_t n = x_prior.size();
-    // std::cout << "n " << n << endl;
     size_t N = x_vec.size() + n + 1;
-    // std::cout << "N " << N << endl;
-    double eta_n, rho_h, nu_n1, nu_n2, nu_n, mu_n, sigma_n, temp, x;
+    std::vector<double> x_density(x_vec.size());
+    double eta_n, rho_h, nu_n1, nu_n2, nu_n, mu_n, sigma_n, temp, output, x;
     eta_n = nu_n1 = nu_n2 = 1;
 
     for (size_t h = 1; h <= n; h++)
@@ -123,12 +122,11 @@ void density_vec(std::vector<double> &output, std::vector<double> x_vec, std::ve
     sigma_n = sqrt(log( 1 + nu_n / pow(eta_n - 1, 2)));
     h = n;
 
-
     for (size_t i = 0; i < x_vec.size(); i++)
     {
-        
-        output[i] = density_single(x_vec[i], x_prior, tau, mu_n, sigma_n);
-        if (take_log) {output[i] = log(output[i]);}
+        x = x_vec[i];
+        temp = density_single(x, x_prior, tau, mu_n, sigma_n);
+        x_density[i] = temp;
 
         h++;
         rho_h = double (N-h) / double(N-h+1);
@@ -139,16 +137,18 @@ void density_vec(std::vector<double> &output, std::vector<double> x_vec, std::ve
         mu_n = 2*log(eta_n - 1) - 0.5*log(nu_n + pow(eta_n - 1, 2));
         sigma_n = sqrt(log( 1 + nu_n / pow(eta_n - 1, 2)));
         x_prior.push_back(x);
-        // std::cout << "h " << h << endl;
-        // std::cout << "rho_h " << rho_h << endl;
-        // std::cout << "eta_n " << eta_n << endl;
-        // std::cout << "nu_n1 " << nu_n1 << endl;
-        // std::cout << "nu_n2 " << nu_n1 << endl;
-        // std::cout << "nu_n " << nu_n << endl;
-        // std::cout << "mu_n " << mu_n << endl;
-        // std::cout << "sigma_n " << sigma_n << endl;
-            
     }
-
+    if (take_log)
+    {
+        output = 0;
+        for (size_t i = 0; i < x_density.size(); i++) { output += log(x_density[i]);}
+        return output;
+    }
+    else
+    {
+        output = 0;
+        for (size_t i = 0; i < x_density.size(); i++) { output *= x_density[i];}
+        return output;
+    }
     
 }
