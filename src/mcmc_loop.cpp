@@ -701,7 +701,6 @@ void mcmc_loop_density(matrix<size_t> &Xorder_std, bool verbose, matrix<double> 
             // Draw Sigma
 
             model->update_state(state, tree_ind, x_struct);
-
             sigma_draw_xinfo[sweeps][tree_ind] = state->sigma;
 
             if (state->use_all && (sweeps > state->burnin) && (state->mtry != state->p))
@@ -720,6 +719,9 @@ void mcmc_loop_density(matrix<size_t> &Xorder_std, bool verbose, matrix<double> 
             model->initialize_root_suffstat(state, trees[sweeps][tree_ind].suff_stat);
 
             trees[sweeps][tree_ind].grow_from_root_density(state, Xorder_std, x_struct->X_counts, x_struct->X_num_unique, model, x_struct, sweeps, tree_ind, true, false, true);
+            tree::npv v;
+            trees[sweeps][tree_ind].getbots(v);
+            std::cout << "tree size: " <<  v.size() << endl;
 
             state->update_split_counts(tree_ind);
 

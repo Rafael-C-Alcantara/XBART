@@ -44,7 +44,7 @@ verbose = TRUE # print the progress on screen
 
 
 if (small_case) {
-  n = 200 # size of training set
+  n = 500 # size of training set
   nt = 100 # size of testing set
   d = 3 # number of TOTAL variables
   dcat = 3 # number of categorical variables
@@ -92,12 +92,10 @@ if (new_data) {
   # }
 
   f = function(x) {
-    sin(x[, 3] ^ 2) + sin(rowSums(x[, 1:2] ^ 2)) + (x[, 1] + x[, 2] ^ 2) / (3 + x[, 3])
+    sin(x[, 2] ^ 2) + sin(rowSums(x[, 1:2] ^ 2)) + (x[, 1] + x[, 2] ^ 2) / (3 + x[, 1])
+    # sin(x[, 3] ^ 2) + sin(rowSums(x[, 1:2] ^ 2)) + (x[, 1] + x[, 2] ^ 2) / (3 + x[, 3])
     # sin(rowSums(x[, 3:4] ^ 2)) + sin(rowSums(x[, 1:2] ^ 2)) + (x[, 1] + x[, 2] ^ 2) / (3 + x[, 3] + x[, 4] ^ 2)
     # sin(rowSums(x[, 3:4] ^ 2)) + sin(rowSums(x[, 1:2] ^ 2)) + (x[, 5] + x[, 6]) ^ 2 * (x[, 1] + x[, 2] ^ 2) / (3 + x[, 3] + x[, 4] ^ 2)
-    #rowSums(x[,1:30]^2)
-    #pmax(x[,1]*x[,2], abs(x[,3])*(x[,10]>x[,15])+abs(x[,4])*(x[,10]<=x[,15]))
-    #
   }
 
   # to test if ties cause a crash in continuous variables
@@ -202,8 +200,8 @@ print(paste("running time, XBART", time_XBART))
 
 
 # For Travis
-stopifnot(xbart_rmse < 1)
-stopifnot(time_XBART < 5)
+# stopifnot(xbart_rmse < 1)
+# stopifnot(time_XBART < 5)
 
 # distribution of specific categories
 cat_match = function(x, cat){
@@ -211,10 +209,29 @@ cat_match = function(x, cat){
   return(all(x==cat))
 }
 
-cat1 = xtest[1, ]
-ind = apply(x, 1, cat_match, cat=cat1)
-indt = apply(xtest, 1, cat_match, cat=cat1)
+for (test_ind in 1:nrow(xtest)){
+  cat1 = xtest[test_ind, ]
+  ind = apply(x, 1, cat_match, cat=cat1)
+  indt = apply(xtest, 1, cat_match, cat=cat1)
+  
+  # plot.new()
+  h <- hist(y[ind], plot=FALSE)
+  h$counts=h$counts/sum(h$counts)
+  plot(h, main = "", xlim = c(min(y), max(y)))
+  # hist(y_test[indt], col='grey', add=T, freq = F)
+  for (i in 1:params$num_sweeps){
+    lines(x = seq(min(y), max(y), length.out=100), y = fit$yhats_test[test_ind, i, ], type = 'l')
+  }
+  abline(v = f(as.data.frame(t(cat1))), col = 'red')
+  title(toString(cat1))
+  box()
+}
 
-hist(y[ind], col='white')
-hist(y_test[indt], col='grey', add=T)
-box()
+plot(x = seq(min(y), max(y), length.out=100), y = fit$yhats_test[test_ind, i, ], type = 'l',
+                ylim=c(0, 0.25), xlim = c(min(y), max(y)))
+for (test_ind in 1:nrow(xtest)){
+  cat1 = xtest[test_ind, ]
+  ind = apply(x, 1, cat_match, cat=cat1)
+  indt = apply(xtest, 1, cat_match, cat=cat1)
+  lines(x = seq(min(y), max(y), length.out=100), y = fit$yhats_test[test_ind, i, ], type = 'l')
+}
