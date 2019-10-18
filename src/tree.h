@@ -257,4 +257,7 @@ void getThetaForObs_Outsample(matrix<double> &output, std::vector<tree> &tree, s
 
 void getThetaForObs_Outsample_ave(matrix<double> &output, std::vector<tree> &tree, size_t x_index, const double *Xtest, size_t N_Xtest, size_t p);
 
+void getDensityForObs_Outsample(std::vector<double> &output, std::vector<tree> &tree, size_t x_index, const double *Xtest, size_t N_Xtest, size_t p, double tau);
+
+
 #endif

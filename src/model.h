@@ -548,8 +548,11 @@ public:
     // Model *clone() { return new DensityModel(*this); }
 
     double density(std::vector<double> x_vec) const;
+    void predict_std(const double *Xtestpointer, size_t N_test, size_t p, size_t num_trees, size_t num_sweeps, matrix<double> &yhats_test_xinfo, vector<vector<tree>> &trees, size_t data_ind);
+
 
 };
+
 
 
 

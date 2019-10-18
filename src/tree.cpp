@@ -2328,26 +2328,24 @@ void calculate_density_no_split(matrix<size_t> &Xorder_std, std::vector<double> 
 
 
 
-// void getDensityForObs_Outsample(matrix<double> &output, std::vector<tree> &tree, size_t x_index, const double *Xtest, size_t N_Xtest, size_t p)
-// {
-//     // get theta of ONE observation of ALL trees, out sample fit
-//     // input is a pointer to testing set matrix because it is out of sample
-//     // tree is a vector of all trees
+void getDensityForObs_Outsample(std::vector<double> &output, std::vector<tree> &tree, size_t x_index, const double *Xtest, size_t N_Xtest, size_t p, double tau)
+{
+    // get theta of ONE observation of ALL trees, out sample fit
+    // input is a pointer to testing set matrix because it is out of sample
+    // tree is a vector of all trees
 
-//     // output should have dimension (dim_theta, num_trees)
+    // output should have dimension (dim_theta, num_trees)
 
-//     tree::tree_p bn; // pointer to bottom node
-//     size_t n = 100; // simulate points 
-//     std::vector<double> x(n);
-//     for (size_t i = 0; i < tree.size(); i++)
-//     {
-//         // loop over trees
-//         // tree search
-//         bn = tree[i].search_bottom_std(Xtest, x_index, p, N_Xtest);
+    tree::tree_p bn; // pointer to bottom node
+    size_t n = 100; // simulate points 
+    std::vector<double> x(n);
+    bn = tree[0].search_bottom_std(Xtest, x_index, p, N_Xtest);
+    ini_seq(x, bn->min_resid, bn->max_resid);
+    density_vec(output, x, bn->node_obs, tau, false);
         
-//     }
-//     return;
-// }
+    
+    return;
+}
 
 // void density_estimation(const double *Xtestpointer, size_t N_test, size_t p, size_t num_trees, size_t num_sweeps, matrix<double> &yhats_test_xinfo, vector<vector<tree>> &trees)
 // {

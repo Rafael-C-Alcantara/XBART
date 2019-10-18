@@ -10,13 +10,13 @@ get_XBART_params <- function(y) {
     #                   burnin = 0,
     #                   no_split_penality = "Auto"
     #                   ) # burnin of MCMC sample
-  XBART_params = list(num_trees = 15, # number of trees 
-                      num_sweeps = 10, # number of sweeps (samples of the forest)
+  XBART_params = list(num_trees = 1, # number of trees 
+                      num_sweeps = 4, # number of sweeps (samples of the forest)
                       n_min = 1, # minimal node size
                       alpha = 0.95, # BART prior parameter 
                       beta = 1.25, # BART prior parameter
                       mtry = 10, # number of variables sampled in each split
-                      burnin = 5,
+                      burnin = 0,
                       no_split_penality = "Auto"
                       ) # burnin of MCMC sample
   num_tress = XBART_params$num_trees
@@ -80,16 +80,16 @@ if (new_data) {
     x = matrix(as.numeric(sample(0:1, dcat * n, replace = TRUE)), n, dcat)
   }
 
-
-  if (d != dcat) {
-    xtest = matrix(runif((d - dcat) * nt, -2, 2), nt, d - dcat)
-    if (dcat > 0) {
-      xtest = cbind(xtest, matrix(as.numeric(sample(-2:2, dcat * nt, replace = TRUE)), nt, dcat))
-    }
-  } else {
-    # xtest = matrix(as.numeric(sample(-2:2, dcat * nt, replace = TRUE)), nt, dcat)
-    xtest = matrix(as.numeric(sample(0:1, dcat * nt, replace = TRUE)), nt, dcat)
-  }
+  xtest = unique(x)
+  # if (d != dcat) {
+  #   xtest = matrix(runif((d - dcat) * nt, -2, 2), nt, d - dcat)
+  #   if (dcat > 0) {
+  #     xtest = cbind(xtest, matrix(as.numeric(sample(-2:2, dcat * nt, replace = TRUE)), nt, dcat))
+  #   }
+  # } else {
+  #   # xtest = matrix(as.numeric(sample(-2:2, dcat * nt, replace = TRUE)), nt, dcat)
+  #   xtest = matrix(as.numeric(sample(0:1, dcat * nt, replace = TRUE)), nt, dcat)
+  # }
 
   f = function(x) {
     sin(x[, 3] ^ 2) + sin(rowSums(x[, 1:2] ^ 2)) + (x[, 1] + x[, 2] ^ 2) / (3 + x[, 3])
@@ -111,7 +111,7 @@ if (new_data) {
   #y_test = ftest + sigma*(rgamma(nt,1,1)-1)/(3+xtest[,d])
 
   y = ftrue + sigma * rnorm(n)
-  y_test = ftest + sigma * rnorm(nt)
+  y_test = ftest + sigma * rnorm(nrow(xtest)) # nt
   # sample prior from y
   y_prior = y[sample(n, 10)]
 }
@@ -205,16 +205,16 @@ print(paste("running time, XBART", time_XBART))
 stopifnot(xbart_rmse < 1)
 stopifnot(time_XBART < 5)
 
-# # distribution of specific categories
-# cat_match = function(x, cat){
-#   if (length(x) != length(cat)){cat('dimension not match')}
-#   return(all(x==cat))
-# }
+# distribution of specific categories
+cat_match = function(x, cat){
+  if (length(x) != length(cat)){cat('dimension not match')}
+  return(all(x==cat))
+}
 
-# cat1 = c(1, 0, 0, 0, 0, 0, 0)
-# ind = apply(x, 1, cat_match, cat=cat1)
-# indt = apply(xtest, 1, cat_match, cat=cat1)
+cat1 = xtest[1, ]
+ind = apply(x, 1, cat_match, cat=cat1)
+indt = apply(xtest, 1, cat_match, cat=cat1)
 
-# hist(y[ind], col='white')
-# hist(y_test[indt], col='grey', add=T)
-# box()
+hist(y[ind], col='white')
+hist(y_test[indt], col='grey', add=T)
+box()

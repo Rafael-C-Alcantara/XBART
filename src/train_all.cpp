@@ -939,8 +939,7 @@ Rcpp::List XBART_density_cpp(arma::mat y, arma::mat X, arma::mat Xtest, arma::ma
     // matrix<double> yhats_xinfo;
     // ini_matrix(yhats_xinfo, N, num_sweeps);
 
-    matrix<double> yhats_test_xinfo;
-    ini_matrix(yhats_test_xinfo, N_test, num_sweeps);
+
 
     matrix<double> sigma_draw_xinfo;
     ini_matrix(sigma_draw_xinfo, num_trees, num_sweeps);
@@ -967,11 +966,9 @@ Rcpp::List XBART_density_cpp(arma::mat y, arma::mat X, arma::mat Xtest, arma::ma
     ////////////////////////////////////////////////////////////////
     mcmc_loop_density(Xorder_std, verbose, sigma_draw_xinfo, *trees2, no_split_penality, state, model, x_struct);
 
-    model->predict_std(Xtestpointer, N_test, p, num_trees, num_sweeps, yhats_test_xinfo, *trees2);
-
     // R Objects to Return
     // Rcpp::NumericMatrix yhats(N, num_sweeps);
-    Rcpp::NumericMatrix yhats_test(N_test, num_sweeps);
+    
     Rcpp::NumericMatrix sigma_draw(num_trees, num_sweeps); // save predictions of each tree
     Rcpp::NumericVector split_count_sum(p);                // split counts
     Rcpp::XPtr<std::vector<std::vector<tree>>> tree_pnt(trees2, true);
@@ -984,13 +981,23 @@ Rcpp::List XBART_density_cpp(arma::mat y, arma::mat X, arma::mat Xtest, arma::ma
     //         yhats(i, j) = yhats_xinfo[j][i];
     //     }
     // }
+    matrix<double> yhats_test_xinfo;
+    ini_matrix(yhats_test_xinfo, 100, num_sweeps);
+    arma::Cube<double> yhats_test(N_test, num_sweeps, 100);
+    // yhats_test.attr("dim") = Rcpp::Dimension(num_sweeps, 100, N_test);
+    size_t ind_to;
     for (size_t i = 0; i < N_test; i++)
     {
+        model->predict_std(Xtestpointer, N_test, p, num_trees, num_sweeps, yhats_test_xinfo, *trees2, i);
         for (size_t j = 0; j < num_sweeps; j++)
         {
-            yhats_test(i, j) = yhats_test_xinfo[j][i];
+            for (size_t k = 0; k < 100; k++)
+            {
+                yhats_test(i, j, k) = yhats_test_xinfo[j][k];
+            }
         }
     }
+
     for (size_t i = 0; i < num_trees; i++)
     {
         for (size_t j = 0; j < num_sweeps; j++)
