@@ -112,6 +112,7 @@ if (new_data) {
   y_test = ftest + sigma * rnorm(nrow(xtest)) # nt
   # sample prior from y
   y_prior = y[sample(n, 10)]
+  y_range = c(min(y), max(y))
 }
 
 #######################################################################
@@ -125,7 +126,7 @@ categ <- function(z, j) {
 
 params = get_XBART_params(y)
 time = proc.time()
-fit = XBART.density(as.matrix(y), as.matrix(x), as.matrix(xtest), as.matrix(y_prior), p_categorical = dcat,
+fit = XBART.density(as.matrix(y), as.matrix(x), as.matrix(xtest), as.matrix(y_prior), as.matrix(y_range), p_categorical = dcat,
             params$num_trees, params$num_sweeps, params$max_depth,
             params$n_min, alpha = params$alpha, beta = params$beta, tau = params$tau, s = 1, kap = 1,
             mtry = params$mtry, verbose = verbose, burnin = params$burnin,

@@ -1627,22 +1627,14 @@ void tree::grow_from_root_density(std::unique_ptr<State> &state, matrix<size_t> 
     this->N = N_Xorder;
 
     // tau is prior VARIANCE, do not take squares
-
-    if (update_theta)
-    {
-        model->samplePars(state, this->suff_stat, this->theta_vector, this->prob_leaf);
-    }
-
     if (N_Xorder <= state->n_min)
     {
         return;
     }
-
     if (this->depth >= state->max_depth - 1)
     {
         return;
     }
-
     bool no_split = false;
 
     std::vector<size_t> subset_vars(p);
@@ -1677,32 +1669,19 @@ void tree::grow_from_root_density(std::unique_ptr<State> &state, matrix<size_t> 
             subset_vars = sample_int_ccrank(p, state->mtry, state->mtry_weight_current_tree, state->gen);
         }
     }
-
-    // BART_likelihood_all(Xorder_std, no_split, split_var, split_point, subset_vars, X_counts, X_num_unique, model, x_struct, state, this, update_split_prob);
+    
     density_all(Xorder_std, no_split, split_var, split_point, subset_vars, X_counts, X_num_unique, model, x_struct, state, this, update_split_prob);
-
-    // cout << suff_stat << endl;
-
-    // this->loglike_node = model->likelihood(this->suff_stat, this->suff_stat, 1, false, true, state);
 
     if (no_split == true)
     {
         if (!update_split_prob)
         {
-            double resid = state->residual_std[0][Xorder_std[0][0]];
-            double min_resid = resid;
-            double max_resid = resid;
             for (size_t i = 0; i < N_Xorder; i++)
             {
                 x_struct->data_pointers[tree_ind][Xorder_std[0][i]] = &this->theta_vector;
-                resid = state->residual_std[0][Xorder_std[0][i]];
-                this->node_obs.push_back(resid);
-                if (resid < min_resid){min_resid = resid;}
-                else if (resid > max_resid){max_resid = resid;}
+                this->node_obs.push_back(state->residual_std[0][Xorder_std[0][i]]);
             }
             std::cout << "num obs " << this->node_obs.size() << endl; 
-            this->min_resid = min_resid;
-            this->max_resid = max_resid;
         }
 
         if (update_theta)

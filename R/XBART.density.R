@@ -1,4 +1,4 @@
-XBART.density <- function(y, X, Xtest, y_prior, num_trees, num_sweeps, max_depth = 250, 
+XBART.density <- function(y, X, Xtest, y_prior, y_range, num_trees, num_sweeps, max_depth = 250, 
     Nmin = 1, num_cutpoints = 100, alpha = 0.95, beta = 1.25, tau = NULL, 
     no_split_penality = NULL, burnin = 1L, mtry = NULL, p_categorical = 0L, 
     kap = 16, s = 4, verbose = FALSE, parallel = TRUE, random_seed = NULL, 
@@ -7,11 +7,6 @@ XBART.density <- function(y, X, Xtest, y_prior, num_trees, num_sweeps, max_depth
     if (class(X) != "matrix") {
         cat("Input X is not a matrix, try to convert type.\n")
         X = as.matrix(X)
-    }
-    
-    if (class(Xtest) != "matrix") {
-        cat("Input Xtest is not a matrix, try to convert type.\n")
-        Xtest = as.matrix(Xtest)
     }
     
     if (class(y) != "matrix") {
@@ -24,12 +19,17 @@ XBART.density <- function(y, X, Xtest, y_prior, num_trees, num_sweeps, max_depth
         y_prior = as.matrix(y_prior)
     }
     
-    if (dim(X)[1] != length(y)) {
-        stop("Length of X must match length of y")
+    if (class(y_range) != "matrix") {
+        cat("Input y_range is not a matrix, try to convert type.\n")
+        y_range = as.matrix(y_range)
     }
     
-    if (dim(X)[2] != dim(X)[2]) {
-        stop("Column of X must match columns of Xtest")
+    if (nrow(y_range)!= 2){
+        stop("Input y_range has inccorect length.\n")
+    }
+
+    if (dim(X)[1] != length(y)) {
+        stop("Length of X must match length of y")
     }
     
     if (is.null(random_seed)) {
@@ -85,7 +85,7 @@ XBART.density <- function(y, X, Xtest, y_prior, num_trees, num_sweeps, max_depth
     check_scalar(kap, "kap")
     check_scalar(s, "s")
     
-    obj = XBART_density_cpp(y, X, Xtest, y_prior, num_trees, num_sweeps, max_depth, 
+    obj = XBART_density_cpp(y, X, Xtest, y_prior, y_range, num_trees, num_sweeps, max_depth, 
         Nmin, num_cutpoints, alpha, beta, tau, no_split_penality, burnin, 
         mtry, p_categorical, kap, s, verbose, parallel, set_random_seed, 
         random_seed, sample_weights_flag)

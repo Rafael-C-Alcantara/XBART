@@ -731,14 +731,6 @@ double DensityModel::density(std::vector<double> x_vec) const
     sigma_n = sqrt(log( 1 + nu_n / pow(eta_n - 1, 2)));
     h = n_p;
 
-    // std::cout << "rho_h " << rho_h << endl;
-    // std::cout << "eta_n " << eta_n << endl;
-    // std::cout << "nu_n1 " << nu_n1 << endl;
-    // std::cout << "nu_n2 " << nu_n1 << endl;
-    // std::cout << "nu_n " << nu_n << endl;
-    // std::cout << "mu_n " << mu_n << endl;
-    // std::cout << "sigma_n " << sigma_n << endl;
-
     for (size_t i = 0; i < n_obs; i++)
     {
         x = x_vec[i];
@@ -755,14 +747,6 @@ double DensityModel::density(std::vector<double> x_vec) const
         mu_n = 2*log(eta_n - 1) - 0.5*log(nu_n + pow(eta_n - 1, 2));
         sigma_n = sqrt(log( 1 + nu_n / pow(eta_n - 1, 2)));
         x_prior.push_back(x);
-        // std::cout << "h " << h << endl;
-        // std::cout << "rho_h " << rho_h << endl;
-        // std::cout << "eta_n " << eta_n << endl;
-        // std::cout << "nu_n1 " << nu_n1 << endl;
-        // std::cout << "nu_n2 " << nu_n1 << endl;
-        // std::cout << "nu_n " << nu_n << endl;
-        // std::cout << "mu_n " << mu_n << endl;
-        // std::cout << "sigma_n " << sigma_n << endl;
             
     }
 
