@@ -74,6 +74,74 @@ void rcpp_to_std2(arma::mat y, arma::mat X, arma::mat Xtest, std::vector<double>
     return;
 }
 
+void rcpp_to_std2(arma::mat y, arma::mat X, arma::mat Xtest, std::vector<double> &y_std, arma::mat y_prior, std::vector<double> &y_prior_std,  arma::mat y_range, std::vector<double> &y_range_std, double &y_mean, Rcpp::NumericMatrix &X_std, Rcpp::NumericMatrix &Xtest_std, matrix<size_t> &Xorder_std)
+{
+    // The goal of this function is to convert RCPP object to std objects
+
+    // TODO: Refactor code so for loops are self contained functions
+    // TODO: Why RCPP and not std?
+    // TODO: inefficient Need Replacement?
+
+    size_t N = X.n_rows;
+    size_t p = X.n_cols;
+    size_t N_test = Xtest.n_rows;
+
+    // Create y_std
+    for (size_t i = 0; i < N; i++)
+    {
+        y_std[i] = y(i, 0);
+        y_mean = y_mean + y_std[i];
+    }
+    y_mean = y_mean / (double)N;
+
+    // y_prior    
+    for (size_t i = 0; i < N; i++)
+    {
+        y_prior_std[i] = y_prior(i, 0);
+    }
+    // y_range
+    for (size_t i = 0; i < N; i++)
+    {
+        y_range_std[i] = y_range(i, 0);
+    }
+    
+    // X_std
+    for (size_t i = 0; i < N; i++)
+    {
+        for (size_t j = 0; j < p; j++)
+        {
+            X_std(i, j) = X(i, j);
+        }
+    }
+
+    //X_std_test
+    for (size_t i = 0; i < N_test; i++)
+    {
+        for (size_t j = 0; j < p; j++)
+        {
+            Xtest_std(i, j) = Xtest(i, j);
+        }
+    }
+
+    // Create Xorder
+    // Order
+    arma::umat Xorder(X.n_rows, X.n_cols);
+    for (size_t i = 0; i < X.n_cols; i++)
+    {
+        Xorder.col(i) = arma::sort_index(X.col(i));
+    }
+    // Create
+    for (size_t i = 0; i < N; i++)
+    {
+        for (size_t j = 0; j < p; j++)
+        {
+            Xorder_std[j][i] = Xorder(i, j);
+        }
+    }
+
+    return;
+}
+
 void rcpp_to_std2(arma::mat X, arma::mat Xtest, Rcpp::NumericMatrix &X_std, Rcpp::NumericMatrix &Xtest_std, matrix<size_t> &Xorder_std)
 {
   // The goal of this function is to convert RCPP object to std objects
@@ -939,8 +1007,6 @@ Rcpp::List XBART_density_cpp(arma::mat y, arma::mat X, arma::mat Xtest, arma::ma
     // matrix<double> yhats_xinfo;
     // ini_matrix(yhats_xinfo, N, num_sweeps);
 
-
-
     matrix<double> sigma_draw_xinfo;
     ini_matrix(sigma_draw_xinfo, num_trees, num_sweeps);
 
@@ -967,36 +1033,10 @@ Rcpp::List XBART_density_cpp(arma::mat y, arma::mat X, arma::mat Xtest, arma::ma
     mcmc_loop_density(Xorder_std, verbose, sigma_draw_xinfo, *trees2, no_split_penality, state, model, x_struct);
 
     // R Objects to Return
-    // Rcpp::NumericMatrix yhats(N, num_sweeps);
-    
     Rcpp::NumericMatrix sigma_draw(num_trees, num_sweeps); // save predictions of each tree
     Rcpp::NumericVector split_count_sum(p);                // split counts
     Rcpp::XPtr<std::vector<std::vector<tree>>> tree_pnt(trees2, true);
 
-    // TODO: Make these functions
-    // for (size_t i = 0; i < N; i++)
-    // {
-    //     for (size_t j = 0; j < num_sweeps; j++)
-    //     {
-    //         yhats(i, j) = yhats_xinfo[j][i];
-    //     }
-    // }
-    matrix<double> yhats_test_xinfo;
-    ini_matrix(yhats_test_xinfo, 100, num_sweeps);
-    arma::Cube<double> yhats_test(N_test, num_sweeps, 100);
-    // yhats_test.attr("dim") = Rcpp::Dimension(num_sweeps, 100, N_test);
-    size_t ind_to;
-    for (size_t i = 0; i < N_test; i++)
-    {
-        model->predict_std(Xtestpointer, N_test, p, num_trees, num_sweeps, yhats_test_xinfo, *trees2, i);
-        for (size_t j = 0; j < num_sweeps; j++)
-        {
-            for (size_t k = 0; k < 100; k++)
-            {
-                yhats_test(i, j, k) = yhats_test_xinfo[j][k];
-            }
-        }
-    }
 
     for (size_t i = 0; i < num_trees; i++)
     {
@@ -1013,21 +1053,21 @@ Rcpp::List XBART_density_cpp(arma::mat y, arma::mat X, arma::mat Xtest, arma::ma
     auto end = system_clock::now();
 
     auto duration = duration_cast<microseconds>(end - start);
-
-    // COUT << "Total running time " << double(duration.count()) * microseconds::period::num / microseconds::period::den << endl;
+        // Rcpp::Named("yhats_test") = yhats_test,
+        // Rcpp::Named("sigma") = sigma_draw,
 
     // COUT << "Running time of split Xorder " << run_time << endl;
 
     // COUT << "Count of splits for each variable " << mtry_weight_current_tree << endl;
 
-    // clean memory
+        // Rcpp::Named("yhats_test") = yhats_test,
     delete model;
     state.reset();
     x_struct.reset();
 
     return Rcpp::List::create(
         // Rcpp::Named("yhats") = yhats,
-        Rcpp::Named("yhats_test") = yhats_test,
+        // Rcpp::Named("yhats_test") = yhats_test,
         Rcpp::Named("sigma") = sigma_draw,
         Rcpp::Named("importance") = split_count_sum,
         Rcpp::Named("model_list") = Rcpp::List::create(Rcpp::Named("tree_pnt") = tree_pnt, Rcpp::Named("y_mean") = y_mean, Rcpp::Named("p") = p));
