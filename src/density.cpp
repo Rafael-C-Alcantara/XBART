@@ -74,7 +74,6 @@ double test_f(double x, void * params)
         gsl_integration_workspace *w = gsl_integration_workspace_alloc(3000);
        
         for (size_t i = 0; i < params.n; i++){
-            // std::cout << "density_single loop i " << i << endl;
             
             gsl_integration_qagiu (&F, 0, 0, 1e-6, 1000, w, &int_vec[i], &error[i]);
 

@@ -1669,7 +1669,7 @@ void tree::grow_from_root_density(std::unique_ptr<State> &state, matrix<size_t> 
             subset_vars = sample_int_ccrank(p, state->mtry, state->mtry_weight_current_tree, state->gen);
         }
     }
-    
+
     density_all(Xorder_std, no_split, split_var, split_point, subset_vars, X_counts, X_num_unique, model, x_struct, state, this, update_split_prob);
 
     if (no_split == true)
@@ -1681,20 +1681,10 @@ void tree::grow_from_root_density(std::unique_ptr<State> &state, matrix<size_t> 
                 x_struct->data_pointers[tree_ind][Xorder_std[0][i]] = &this->theta_vector;
                 this->node_obs.push_back(state->residual_std[0][Xorder_std[0][i]]);
             }
-            std::cout << "num obs " << this->node_obs.size() << endl; 
+            std::cout << "num obs " << this->suff_stat[0] << endl; 
         }
-
-        if (update_theta)
-        {
-            model->samplePars(state, this->suff_stat, this->theta_vector, this->prob_leaf);
-        }
-
         this->l = 0;
         this->r = 0;
-
-        // update leaf prob, for MH update useage
-        // this->loglike_node = model->likelihood_no_split(this->suff_stat, state);
-
         return;
     }
 
@@ -1703,6 +1693,8 @@ void tree::grow_from_root_density(std::unique_ptr<State> &state, matrix<size_t> 
         // If GROW FROM ROOT MODE
         this->v = split_var;
         this->c = *(state->X_std + state->n_y * split_var + Xorder_std[split_var][split_point]);
+        std::cout << "split_var " << split_var << endl;
+        std::cout << "split_point " << split_point << endl;
     }
 
     // Update Cutpoint to be a true seperating point
@@ -1827,16 +1819,13 @@ void density_all(matrix<size_t> &Xorder_std, bool &no_split, size_t &split_var, 
 
     // calculate likelihood of no-split option
     calculate_density_no_split(Xorder_std, loglike, N_Xorder, loglike_max, model, x_struct, total_categorical_split_candidates, state, tree_pointer);
-
+    
     // transfer loglikelihood to likelihood
     for (size_t ii = 0; ii < loglike.size(); ii++)
     {
         // if a variable is not selected, take exp will becomes 0
         loglike[ii] = exp(loglike[ii] - loglike_max);
     }
-    std::cout << "loglike " << loglike << endl;
-    // cout << "loglike " << loglike << endl;
-    // cout << " ok " << endl;
 
     // sampling cutpoints
     if (N <= state->n_cutpoints + 1 + 2 * state->n_min)
@@ -1993,8 +1982,6 @@ void density_all(matrix<size_t> &Xorder_std, bool &no_split, size_t &split_var, 
             split_point = split_point - 1;
             split_var = split_var + state->p_continuous;
             
-            std::cout << "split_var " << split_var << endl;
-            std::cout << "split_point " << split_point << endl;
         }
     }
 
@@ -2044,10 +2031,8 @@ void calculate_density_continuous(std::vector<double> &loglike, const std::vecto
                 // For now, the order of the residuals depends on the variable in X_order_std
                 std::vector<double> left_vec;
                 std::vector<double> right_vec;
-                // the number of indexes in xorder should equal to suff_stat[2] in this node
-                // std::cout << "continuous " << xorder.size() << "=" << tree_pointer->suff_stat[2] << endl;
 
-                for (size_t j = 0; j < tree_pointer->suff_stat[2]; j++)
+                for (size_t j = 0; j < tree_pointer->suff_stat[0]; j++)
                 {
                     right_vec.push_back(state->residual_std[0][xorder[j]]);
                 }
@@ -2098,10 +2083,8 @@ void calculate_density_continuous(std::vector<double> &loglike, const std::vecto
                     // For now, the order of the residuals depends on the variable in X_order_std
                     std::vector<double> left_vec;
                     std::vector<double> right_vec;
-                    // the number of indexes in xorder should equal to suff_stat[2] in this node
-                    // std::cout << "continuous " << xorder.size() << "=" << tree_pointer->suff_stat[2] << endl;
 
-                    for (size_t j = 0; j < tree_pointer->suff_stat[2]; j++)
+                    for (size_t j = 0; j < tree_pointer->suff_stat[0]; j++)
                     {
                         right_vec.push_back(state->residual_std[0][xorder[j]]);
                     }
@@ -2199,16 +2182,14 @@ void calculate_density_categorical(std::vector<double> &loglike, size_t &loglike
             // For now, the order of the residuals depends on the variable in X_order_std
             std::vector<double> left_vec;
             std::vector<double> right_vec;
-            // the number of indexes in xorder should equal to suff_stat[2] in this node
-            // std::cout << "categorical " << Xorder_std[i].size() << "=" << tree_pointer->suff_stat[2] << endl;
 
-            for (size_t j = 0; j < tree_pointer->suff_stat[2]; j++)
+            for (size_t j = 0; j < tree_pointer->suff_stat[0]; j++)
             {
                 right_vec.push_back(state->residual_std[0][Xorder_std[i][j]]);
             }
-
             for (size_t j = start; j <= end2; j++)
             {
+
                 if (X_counts[j] != 0)
                 {
 
@@ -2224,16 +2205,11 @@ void calculate_density_categorical(std::vector<double> &loglike, size_t &loglike
                     }
 
                     n1 = n1 + X_counts[j];
-                    // n1tau = (double)n1 * model->tau;
-                    // n2tau = ntau - n1tau;
 
-                    // loglike[loglike_start + j] = model->likelihood(model->tau, n1tau, sigma2, y_sum, true) + model->likelihood(model->tau, n2tau, sigma2, y_sum, false);
-                    // loglike[loglike_start + j] = model->likelihood(temp_suff_stat, tree_pointer->suff_stat, n1 - 1, true, false, state) + model->likelihood(temp_suff_stat, tree_pointer->suff_stat, n1 - 1, false, false, state);
                     loglike[loglike_start + j] = model->density(left_vec) + model->density(right_vec);
 
                     // count total number of cutpoint candidates
                     effective_cutpoints++;
-
                     if (loglike[loglike_start + j] > loglike_max)
                     {
                         loglike_max = loglike[loglike_start + j];

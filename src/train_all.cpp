@@ -1016,19 +1016,19 @@ Rcpp::List XBART_density_cpp(arma::mat y, arma::mat X, arma::mat Xtest, arma::ma
     {
         (*trees2)[i] = vector<tree>(num_trees);
     }
-
+    
     // define model
-    DensityModel *model = new DensityModel(kap, s, tau, alpha, beta, y_prior_std);
+    DensityModel *model = new DensityModel(tau, y_prior_std);
+
     // NormalModel *model = new NormalModel(kap, s, tau, alpha, beta);
     model->setNoSplitPenality(no_split_penality);
-
     // State settings
     std::vector<double> initial_theta(1, y_mean / (double)num_trees);
     std::unique_ptr<State> state(new NormalState(Xpointer, Xorder_std, N, p, num_trees, p_categorical, p_continuous, set_random_seed, random_seed, n_min, num_cutpoints, parallel, mtry, Xpointer, num_sweeps, sample_weights_flag, &y_std, 1.0, max_depth, y_mean, burnin, model->dim_residual));
 
     // initialize X_struct
     std::unique_ptr<X_struct> x_struct(new X_struct(Xpointer, &y_std, N, Xorder_std, p_categorical, p_continuous, &initial_theta, num_trees));
-
+    
     ////////////////////////////////////////////////////////////////
     mcmc_loop_density(Xorder_std, verbose, sigma_draw_xinfo, *trees2, no_split_penality, state, model, x_struct);
 

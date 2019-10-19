@@ -700,8 +700,8 @@ void mcmc_loop_density(matrix<size_t> &Xorder_std, bool verbose, matrix<double> 
             }
             // Draw Sigma
 
-            model->update_state(state, tree_ind, x_struct);
-            sigma_draw_xinfo[sweeps][tree_ind] = state->sigma;
+            // model->update_state(state, tree_ind, x_struct);
+            // sigma_draw_xinfo[sweeps][tree_ind] = state->sigma;
 
             if (state->use_all && (sweeps > state->burnin) && (state->mtry != state->p))
             {
@@ -726,7 +726,7 @@ void mcmc_loop_density(matrix<size_t> &Xorder_std, bool verbose, matrix<double> 
             state->update_split_counts(tree_ind);
 
             // update partial residual for the next tree to fit
-            model->state_sweep(tree_ind, state->num_trees, state->residual_std, x_struct);
+            // model->state_sweep(tree_ind, state->num_trees, state->residual_std, x_struct);
         }
     }
     thread_pool.stop();

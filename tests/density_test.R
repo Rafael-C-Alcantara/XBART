@@ -186,54 +186,54 @@ if (run_lightgbm) {
 
 
 #######################################################################
-# print
-xbart_rmse = sqrt(mean((fhat.1 - ftest) ^ 2))
-print(paste("rmse of fit xbart: ", round(xbart_rmse, digits = 4)))
-# print(paste("rmse of fit dbart: ", round(sqrt(mean((fhat.db - ftest) ^ 2)), digits = 4)))
+# # print
+# xbart_rmse = sqrt(mean((fhat.1 - ftest) ^ 2))
+# print(paste("rmse of fit xbart: ", round(xbart_rmse, digits = 4)))
+# # print(paste("rmse of fit dbart: ", round(sqrt(mean((fhat.db - ftest) ^ 2)), digits = 4)))
 
-# print(paste("running time, dbarts", time_dbarts))
-print(paste("running time, XBART", time_XBART))
-
-
-# plot(ftest, fhat.db, pch = 20, col = 'orange')
-# points(ftest, fhat.1, pch = 20, col = 'slategray')
-# legend("topleft", c("dbarts", "XBART"), col = c("orange", "slategray"), pch = c(20, 20))
+# # print(paste("running time, dbarts", time_dbarts))
+# print(paste("running time, XBART", time_XBART))
 
 
-# For Travis
-# stopifnot(xbart_rmse < 1)
-# stopifnot(time_XBART < 5)
+# # plot(ftest, fhat.db, pch = 20, col = 'orange')
+# # points(ftest, fhat.1, pch = 20, col = 'slategray')
+# # legend("topleft", c("dbarts", "XBART"), col = c("orange", "slategray"), pch = c(20, 20))
 
-# distribution of specific categories
-cat_match = function(x, cat){
-  if (length(x) != length(cat)){cat('dimension not match')}
-  return(all(x==cat))
-}
 
-# xtest[1:4, ] = xtest[c(1, 4, 2, 3),]
-color = c("lightblue1","darkolivegreen1","lightpink1", "darkseagreen1")
-color_dark = c("blue", "green", "red", "darkseagreen4")
-h <- hist(y, plot=FALSE, breaks = 15)
-h$counts=h$counts/sum(h$counts)
-plot(h, main = "", xlim = c(min(y), max(y)), ylim = c(0, 0.5))
-color_ind=1
-for (test_ind in 1:nrow(xtest)){
-  cat1 = xtest[test_ind, ]
-  ind = apply(x, 1, cat_match, cat=cat1)
-  indt = apply(xtest, 1, cat_match, cat=cat1)
+# # For Travis
+# # stopifnot(xbart_rmse < 1)
+# # stopifnot(time_XBART < 5)
+
+# # distribution of specific categories
+# cat_match = function(x, cat){
+#   if (length(x) != length(cat)){cat('dimension not match')}
+#   return(all(x==cat))
+# }
+
+# # xtest[1:4, ] = xtest[c(1, 4, 2, 3),]
+# color = c("lightblue1","darkolivegreen1","lightpink1", "darkseagreen1")
+# color_dark = c("blue", "green", "red", "darkseagreen4")
+# h <- hist(y, plot=FALSE, breaks = 15)
+# h$counts=h$counts/sum(h$counts)
+# plot(h, main = "", xlim = c(min(y), max(y)), ylim = c(0, 0.5))
+# color_ind=1
+# for (test_ind in 1:nrow(xtest)){
+#   cat1 = xtest[test_ind, ]
+#   ind = apply(x, 1, cat_match, cat=cat1)
+#   indt = apply(xtest, 1, cat_match, cat=cat1)
   
-  # plot.new()
-  h <- hist(y[ind], plot=FALSE, breaks = 15)
-  h$counts=h$counts/sum(h$counts)
-  plot(h, main = "", xlim = c(min(y), max(y)), col=color[color_ind], add=TRUE)
-  # abline(v = ftest[indt], col = 'red')
-  # title(toString(cat1))
-  color_ind = color_ind+1
-}
-for (test_ind in 1:nrow(xtest))
-{
-  lines(x = seq(-2, 4, length.out=100), y = exp(fit$yhats_test[test_ind, 1, ]), type = 'l', col=color_dark[test_ind])
-}
+#   # plot.new()
+#   h <- hist(y[ind], plot=FALSE, breaks = 15)
+#   h$counts=h$counts/sum(h$counts)
+#   plot(h, main = "", xlim = c(min(y), max(y)), col=color[color_ind], add=TRUE)
+#   # abline(v = ftest[indt], col = 'red')
+#   # title(toString(cat1))
+#   color_ind = color_ind+1
+# }
+# for (test_ind in 1:nrow(xtest))
+# {
+#   lines(x = seq(-2, 4, length.out=100), y = exp(fit$yhats_test[test_ind, 1, ]), type = 'l', col=color_dark[test_ind])
+# }
 
 
 # library(PBDE)
