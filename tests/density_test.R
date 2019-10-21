@@ -31,11 +31,8 @@ get_XBART_params <- function(y) {
 #######################################################################
 library(XBART)
 
-set.seed(100)
+set.seed(90)
 new_data = TRUE # generate new data
-run_dbarts = FALSE # run dbarts
-run_xgboost = FALSE # run xgboost
-run_lightgbm = FALSE # run lightgbm
 parl = TRUE # parallel computing
 
 
@@ -80,17 +77,6 @@ if (new_data) {
     x = matrix(as.numeric(sample(0:1, dcat * n, replace = TRUE)), n, dcat)
   }
 
-  xtest = unique(x)
-  # if (d != dcat) {
-  #   xtest = matrix(runif((d - dcat) * nt, -2, 2), nt, d - dcat)
-  #   if (dcat > 0) {
-  #     xtest = cbind(xtest, matrix(as.numeric(sample(-2:2, dcat * nt, replace = TRUE)), nt, dcat))
-  #   }
-  # } else {
-  #   # xtest = matrix(as.numeric(sample(-2:2, dcat * nt, replace = TRUE)), nt, dcat)
-  #   xtest = matrix(as.numeric(sample(0:1, dcat * nt, replace = TRUE)), nt, dcat)
-  # }
-
   f = function(x) {
     sin(x[, 2] ^ 2) + sin(rowSums(x[, 1:2] ^ 2)) + (x[, 1] + x[, 2] ^ 2) / (3 + x[, 1])
     # sin(x[, 3] ^ 2) + sin(rowSums(x[, 1:2] ^ 2)) + (x[, 1] + x[, 2] ^ 2) / (3 + x[, 3])
@@ -100,16 +86,12 @@ if (new_data) {
 
   # to test if ties cause a crash in continuous variables
   x[, 1] = round(x[, 1], 4)
-  #xtest[,1] = round(xtest[,1],2)
   ftrue = f(x)
-  ftest = f(xtest)
   sigma = sd(ftrue)
 
   #y = ftrue + sigma*(rgamma(n,1,1)-1)/(3+x[,d])
-  #y_test = ftest + sigma*(rgamma(nt,1,1)-1)/(3+xtest[,d])
 
   y = ftrue + sigma * rnorm(n)
-  y_test = ftest + sigma * rnorm(nrow(xtest)) # nt
   # sample prior from y
   y_prior = y[sample(n, 10)]
   y_range = c(min(y), max(y))
@@ -126,7 +108,7 @@ categ <- function(z, j) {
 
 params = get_XBART_params(y)
 time = proc.time()
-fit = XBART.density(as.matrix(y), as.matrix(x), as.matrix(xtest), as.matrix(y_prior), as.matrix(y_range), p_categorical = dcat,
+fit = XBART.density(as.matrix(y), as.matrix(x), as.matrix(y_prior), as.matrix(y_range), p_categorical = dcat,
             params$num_trees, params$num_sweeps, params$max_depth,
             params$n_min, alpha = params$alpha, beta = params$beta, tau = params$tau, s = 1, kap = 1,
             mtry = params$mtry, verbose = verbose, burnin = params$burnin,
@@ -136,54 +118,9 @@ fit = XBART.density(as.matrix(y), as.matrix(x), as.matrix(xtest), as.matrix(y_pr
 # two ways to predict on testing set
 
 # 1. set xtest as input to main fitting function
-# fhat.1 = apply(fit$yhats_test[, params$burnin:params$num_sweeps], 1, mean)
-fhat.1 = apply(fit$yhats_test, 1, mean)
+
 time = proc.time() - time
 print(time[3])
-
-# 2. a separate predict function
-pred = predict(fit, xtest)
-# pred = rowMeans(pred[, params$burnin:params$num_sweeps])
-pred = rowMeans(pred)
-
-time_XBART = round(time[3], 3)
-
-pred2 = predict(fit, xtest)
-# pred2 = rowMeans(pred2[, params$burnin:params$num_sweeps])
-pred2 = rowMeans(pred2)
-stopifnot(pred == pred2)
-
-#######################################################################
-# dbarts
-if (run_dbarts) {
-  library(dbarts)
-
-  time = proc.time()
-  fit = bart(x, y, xtest, verbose = FALSE, numcut = 100, ndpost = 1000, nskip = 500)
-  time = proc.time() - time
-  print(time[3])
-  fhat.db = fit$yhat.test.mean
-  time_dbarts = round(time[3], 3)
-} else {
-  fhat.db = fhat.1
-  time_dbarts = time_XBART
-}
-
-
-#######################################################################
-# XGBoost
-if (run_xgboost) {
-  library(xgboost)
-}
-
-
-
-#######################################################################
-# LightGBM
-if (run_lightgbm) {
-  library(xgboost)
-}
-
 
 #######################################################################
 # # print

@@ -1,4 +1,4 @@
-XBART.density <- function(y, X, Xtest, y_prior, y_range, num_trees, num_sweeps, max_depth = 250, 
+XBART.density <- function(y, X, y_prior, y_range, num_trees, num_sweeps, max_depth = 250, 
     Nmin = 1, num_cutpoints = 100, alpha = 0.95, beta = 1.25, tau = NULL, 
     no_split_penality = NULL, burnin = 1L, mtry = NULL, p_categorical = 0L, 
     kap = 16, s = 4, verbose = FALSE, parallel = TRUE, random_seed = NULL, 
@@ -85,7 +85,7 @@ XBART.density <- function(y, X, Xtest, y_prior, y_range, num_trees, num_sweeps, 
     check_scalar(kap, "kap")
     check_scalar(s, "s")
     
-    obj = XBART_density_cpp(y, X, Xtest, y_prior, y_range, num_trees, num_sweeps, max_depth, 
+    obj = XBART_density_cpp(y, X, y_prior, y_range, num_trees, num_sweeps, max_depth, 
         Nmin, num_cutpoints, alpha, beta, tau, no_split_penality, burnin, 
         mtry, p_categorical, kap, s, verbose, parallel, set_random_seed, 
         random_seed, sample_weights_flag)

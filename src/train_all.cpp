@@ -74,7 +74,7 @@ void rcpp_to_std2(arma::mat y, arma::mat X, arma::mat Xtest, std::vector<double>
     return;
 }
 
-void rcpp_to_std2(arma::mat y, arma::mat X, arma::mat Xtest, std::vector<double> &y_std, arma::mat y_prior, std::vector<double> &y_prior_std,  arma::mat y_range, std::vector<double> &y_range_std, double &y_mean, Rcpp::NumericMatrix &X_std, Rcpp::NumericMatrix &Xtest_std, matrix<size_t> &Xorder_std)
+void rcpp_to_std2(arma::mat y, arma::mat X, std::vector<double> &y_std, arma::mat y_prior, std::vector<double> &y_prior_std,  arma::mat y_range, std::vector<double> &y_range_std, double &y_mean, Rcpp::NumericMatrix &X_std, matrix<size_t> &Xorder_std)
 {
     // The goal of this function is to convert RCPP object to std objects
 
@@ -84,7 +84,6 @@ void rcpp_to_std2(arma::mat y, arma::mat X, arma::mat Xtest, std::vector<double>
 
     size_t N = X.n_rows;
     size_t p = X.n_cols;
-    size_t N_test = Xtest.n_rows;
 
     // Create y_std
     for (size_t i = 0; i < N; i++)
@@ -95,31 +94,21 @@ void rcpp_to_std2(arma::mat y, arma::mat X, arma::mat Xtest, std::vector<double>
     y_mean = y_mean / (double)N;
 
     // y_prior    
-    for (size_t i = 0; i < N; i++)
+    for (size_t i = 0; i < y_prior.n_rows; i++)
     {
         y_prior_std[i] = y_prior(i, 0);
     }
+
     // y_range
-    for (size_t i = 0; i < N; i++)
-    {
-        y_range_std[i] = y_range(i, 0);
-    }
-    
+    y_range_std[0] = y_range(0, 0);
+    y_range_std[1] = y_range(1, 0);
+
     // X_std
     for (size_t i = 0; i < N; i++)
     {
         for (size_t j = 0; j < p; j++)
         {
             X_std(i, j) = X(i, j);
-        }
-    }
-
-    //X_std_test
-    for (size_t i = 0; i < N_test; i++)
-    {
-        for (size_t j = 0; j < p; j++)
-        {
-            Xtest_std(i, j) = Xtest(i, j);
         }
     }
 
@@ -952,7 +941,7 @@ Rcpp::List XBART_MH_cpp(arma::mat y, arma::mat X, arma::mat Xtest, size_t num_tr
         Rcpp::Named("model_list") = Rcpp::List::create(Rcpp::Named("tree_pnt") = tree_pnt, Rcpp::Named("y_mean") = y_mean, Rcpp::Named("p") = p));
 }
 
-Rcpp::List XBART_density_cpp(arma::mat y, arma::mat X, arma::mat Xtest, arma::mat y_prior, arma::mat y_range, size_t num_trees, size_t num_sweeps, size_t max_depth, size_t n_min, size_t num_cutpoints, double alpha, double beta, double tau, double no_split_penality, size_t burnin = 1, size_t mtry = 0, size_t p_categorical = 0, double kap = 16, double s = 4, bool verbose = false, bool parallel = true, bool set_random_seed = false, size_t random_seed = 0, bool sample_weights_flag = true)
+Rcpp::List XBART_density_cpp(arma::mat y, arma::mat X, arma::mat y_prior, arma::mat y_range, size_t num_trees, size_t num_sweeps, size_t max_depth, size_t n_min, size_t num_cutpoints, double alpha, double beta, double tau, double no_split_penality, size_t burnin = 1, size_t mtry = 0, size_t p_categorical = 0, double kap = 16, double s = 4, bool verbose = false, bool parallel = true, bool set_random_seed = false, size_t random_seed = 0, bool sample_weights_flag = true)
 {
 
     auto start = system_clock::now();
@@ -962,7 +951,6 @@ Rcpp::List XBART_density_cpp(arma::mat y, arma::mat X, arma::mat Xtest, arma::ma
     // number of total variables
     size_t p = X.n_cols;
 
-    size_t N_test = Xtest.n_rows;
 
     // number of continuous variables
     size_t p_continuous = p - p_categorical;
@@ -991,18 +979,15 @@ Rcpp::List XBART_density_cpp(arma::mat y, arma::mat X, arma::mat Xtest, arma::ma
     double y_mean = 0.0;
 
     Rcpp::NumericMatrix X_std(N, p);
-    Rcpp::NumericMatrix Xtest_std(N_test, p);
-
-    rcpp_to_std2(y, X, Xtest, y_std, y_mean, X_std, Xtest_std, Xorder_std);
-
     std::vector<double> y_prior_std(y_prior.n_rows);
-    rcpp_to_std2(y_prior, y_prior_std);
+    std::vector<double> y_range_std(2);
+    
+    rcpp_to_std2(y, X, y_std, y_prior, y_prior_std, y_range, y_range_std, y_mean, X_std, Xorder_std);
 
     ///////////////////////////////////////////////////////////////////
 
     // double *ypointer = &y_std[0];
     double *Xpointer = &X_std[0];
-    double *Xtestpointer = &Xtest_std[0];
 
     // matrix<double> yhats_xinfo;
     // ini_matrix(yhats_xinfo, N, num_sweeps);
