@@ -523,16 +523,18 @@ class DensityModel : public Model
 {
 public:
     size_t dim_suffstat = 1;
-
+    size_t n_sim = 100; // number of simulated points for each density estimation between y_range
     // prior on leaf parameter
     double tau;
     // prior data
     std::vector<double> prior;
+    std::vector<double> range;
     
-    DensityModel(double  tau, std::vector<double> prior) : Model(1, 1)
+    DensityModel(double  tau, std::vector<double> prior, std::vector<double> range) : Model(1, 1)
     {
         this->tau = tau;
-        this->prior = prior; // should devide by number of trees at some where.
+        this->prior = prior; 
+        this->range = range;
         this->dim_residual = 1;
     }
         

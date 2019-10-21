@@ -1003,7 +1003,7 @@ Rcpp::List XBART_density_cpp(arma::mat y, arma::mat X, arma::mat y_prior, arma::
     }
     
     // define model
-    DensityModel *model = new DensityModel(tau, y_prior_std);
+    DensityModel *model = new DensityModel(tau, y_prior_std, y_range_std);
 
     // NormalModel *model = new NormalModel(kap, s, tau, alpha, beta);
     model->setNoSplitPenality(no_split_penality);
@@ -1017,11 +1017,14 @@ Rcpp::List XBART_density_cpp(arma::mat y, arma::mat X, arma::mat y_prior, arma::
     ////////////////////////////////////////////////////////////////
     mcmc_loop_density(Xorder_std, verbose, sigma_draw_xinfo, *trees2, no_split_penality, state, model, x_struct);
 
+
+    tree::npv bn;
+    (*trees2)[0][0].getbots(bn);
     // R Objects to Return
     Rcpp::NumericMatrix sigma_draw(num_trees, num_sweeps); // save predictions of each tree
     Rcpp::NumericVector split_count_sum(p);                // split counts
     Rcpp::XPtr<std::vector<std::vector<tree>>> tree_pnt(trees2, true);
-
+    Rcpp::NumericMatrix density(model->n_sim, bn.size());
 
     for (size_t i = 0; i < num_trees; i++)
     {
