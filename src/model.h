@@ -544,7 +544,7 @@ public:
 
     double density(std::vector<double> x_vec) const;
     
-    void predict_std(const double *Xtestpointer, size_t N_test, size_t p, size_t num_trees, size_t num_sweeps, matrix<double> &yhats_test_xinfo, vector<vector<tree>> &trees, size_t data_ind);
+    void predict_std(size_t num_trees, size_t num_sweeps, vector<vector<tree>> &trees, matrix<matrix<double>> &density_info, matrix<std::vector<std::vector<double>>> &cutpoints, size_t n_sim);
 
     void incSuffStat(matrix<double> &residual_std, size_t index_next_obs, std::vector<double> &suffstats);
 

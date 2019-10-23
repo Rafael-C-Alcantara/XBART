@@ -5,6 +5,7 @@
 #include <chrono>
 #include "mcmc_loop.h"
 #include "X_struct.h"
+#include <tuple>
 
 using namespace std;
 using namespace chrono;
@@ -1017,14 +1018,38 @@ Rcpp::List XBART_density_cpp(arma::mat y, arma::mat X, arma::mat y_prior, arma::
     ////////////////////////////////////////////////////////////////
     mcmc_loop_density(Xorder_std, verbose, sigma_draw_xinfo, *trees2, no_split_penality, state, model, x_struct);
 
+    ////////////////////////////////////////////////////////////////
+    // initialize cutpoints, density
+    matrix<matrix<double>> density_info;
+    matrix<std::vector<std::vector<double>>> cutpoints_info;
 
-    tree::npv bn;
-    (*trees2)[0][0].getbots(bn);
+    ini_matrix(density_info, num_trees, num_sweeps);
+    ini_matrix(cutpoints_info, num_trees, num_sweeps);
+    
+    COUT << "start" << endl;
+    size_t n_sim = 100;
+    model->predict_std(num_trees, num_sweeps, *trees2, density_info, cutpoints_info, n_sim);
+
+
     // R Objects to Return
     Rcpp::NumericMatrix sigma_draw(num_trees, num_sweeps); // save predictions of each tree
     Rcpp::NumericVector split_count_sum(p);                // split counts
     Rcpp::XPtr<std::vector<std::vector<tree>>> tree_pnt(trees2, true);
-    Rcpp::NumericMatrix density(model->n_sim, bn.size());
+    Rcpp::List density(num_sweeps);
+    Rcpp::List cutpoints(num_sweeps);
+    Rcpp::List density_sweep(num_trees);
+    Rcpp::List cutpoints_sweep(num_trees);
+
+    for (size_t i = 0; i < num_sweeps; i++)
+    {
+        for (size_t j = 0; j < num_trees; j++)
+        {
+            density_sweep[j] = density_info[i][j];
+            cutpoints_sweep[j] = cutpoints_info[i][j];
+        }
+        density[i] = density_sweep;
+        cutpoints[i] = cutpoints_sweep;
+    }
 
     for (size_t i = 0; i < num_trees; i++)
     {
@@ -1058,6 +1083,7 @@ Rcpp::List XBART_density_cpp(arma::mat y, arma::mat X, arma::mat y_prior, arma::
         // Rcpp::Named("yhats_test") = yhats_test,
         Rcpp::Named("sigma") = sigma_draw,
         Rcpp::Named("importance") = split_count_sum,
+        Rcpp::Named("density_info") = Rcpp::List::create(Rcpp::Named("cutpoints") = 1, Rcpp::Named("density") = 2),
         Rcpp::Named("model_list") = Rcpp::List::create(Rcpp::Named("tree_pnt") = tree_pnt, Rcpp::Named("y_mean") = y_mean, Rcpp::Named("p") = p));
 
 }

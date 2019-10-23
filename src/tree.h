@@ -124,7 +124,6 @@ public:
     size_t getN() { return N; }
 
     void setN(size_t N) { this->N = N; }
-
     //tree functions--------------------
     tree_p getptr(size_t nid); //get node pointer from node id, 0 if not there
 
@@ -145,7 +144,11 @@ public:
     void getnodes(cnpv &v) const; //get vector of all nodes (const)
 
     tree_p gettop(); // get pointer to the top node
+    
+    void getcutpoints(std::vector<double> &cutpoints);
 
+    void getdensity(std::vector<double> &output, double tau, std::vector<double> y_range);
+    
     void ini_suff_stat() { std::fill(suff_stat.begin(), suff_stat.end(), 0.0); }
 
     void resize_suff_stat(size_t dim_suffstat)
@@ -257,7 +260,6 @@ void getThetaForObs_Outsample(matrix<double> &output, std::vector<tree> &tree, s
 
 void getThetaForObs_Outsample_ave(matrix<double> &output, std::vector<tree> &tree, size_t x_index, const double *Xtest, size_t N_Xtest, size_t p);
 
-void getDensityForObs_Outsample(std::vector<double> &output, std::vector<tree> &tree, size_t x_index, const double *Xtest, size_t N_Xtest, size_t p, double tau);
 
 
 #endif

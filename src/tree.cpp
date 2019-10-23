@@ -186,6 +186,64 @@ tree::tree_p tree::gettop()
         return p->gettop();
     }
 }
+
+//--------------------
+//get all the cutpoints of a bottom node
+void tree::getcutpoints(std::vector<double> &cutpoints)
+{
+    std::cout << "node depth " << this->getdepth() << endl;
+    // If the node has a parent, first record it's parent's cutpoints
+    if (p){
+        COUT << "go parent"<<endl; 
+        p->getcutpoints(cutpoints);
+
+        bool is_left = false;
+        if (p->l == this) {is_left = true;}
+        cutpoints.push_back(double(p->v));
+        cutpoints.push_back(double(p->c));
+        cutpoints.push_back(double(is_left));
+        std::cout << "node v " << p->v << " node c " << p->c << " is left " << is_left << endl;
+    }
+}
+
+//--------------------
+//get simulated density of a bottom node
+void tree::getdensity(std::vector<double> &output, double tau, std::vector<double> y_range)
+{
+
+    if (l){throw "getdensity() can only simulate density for a bottom node. This is not a bottome node.";}
+
+    size_t n_sim = output.size();
+    std::vector<double> x(n_sim);
+    ini_seq(x, y_range[0], y_range[1]);
+
+    size_t h;
+    size_t n = this->node_obs.size();
+    size_t N = n+1;
+
+    // std::vector<double> x_density(x_vec.size());
+    double eta_n, rho_h, nu_n1, nu_n2, nu_n, mu_n, sigma_n, temp;
+    eta_n = nu_n1 = nu_n2 = 1;
+
+    for (size_t h = 1; h <= n; h++)
+    {
+        rho_h = double (N-h) / double(N-h+1);
+        eta_n = eta_n / rho_h;
+        nu_n1 = nu_n1 * (2-rho_h) / pow(rho_h, 2);
+        nu_n2 = nu_n2 * pow(rho_h, -2);
+    }
+    nu_n = nu_n1 - nu_n2;
+    mu_n = 2*log(eta_n - 1) - 0.5*log(nu_n + pow(eta_n - 1, 2));
+    sigma_n = sqrt(log( 1 + nu_n / pow(eta_n - 1, 2)));
+
+    for (size_t i = 0; i < n_sim; i++)
+    {
+        output[i] = density_single(x[i], this->node_obs, tau, mu_n, sigma_n);
+    }
+    
+    return;
+}
+
 //--------------------
 //get all nodes
 void tree::getnodes(npv &v)
@@ -2285,36 +2343,6 @@ void calculate_density_no_split(matrix<size_t> &Xorder_std, std::vector<double> 
 
 
 
-void getDensityForObs_Outsample(std::vector<double> &output, std::vector<tree> &tree, size_t x_index, const double *Xtest, size_t N_Xtest, size_t p, double tau)
-{
-    // get theta of ONE observation of ALL trees, out sample fit
-    // input is a pointer to testing set matrix because it is out of sample
-    // tree is a vector of all trees
-
-    // output should have dimension (dim_theta, num_trees)
-
-    tree::tree_p bn; // pointer to bottom node
-    size_t sim_n = 100; // simulate points 
-    std::vector<double> x(sim_n);
-    bn = tree[0].search_bottom_std(Xtest, x_index, p, N_Xtest);
-    double begin = -2.0;
-    double end = 4.0;
-    ini_seq(x, begin, end);
-    // ini_seq(x, bn->min_resid, bn->max_resid);
-    // std::cout << "sim_x " << x << endl;
-    // std::cout << "bn->obs " << bn->node_obs << endl;
-    // initialize parameter, need double check!!
-    std::vector<double> x_temp(1);
-    for (size_t i = 0; i < sim_n; i++)
-    {
-        x_temp[0] = x[i];
-        output[i] = density_vec(x_temp, bn->node_obs, tau, true);
-    }
-    // std::cout << "suff_stat: " << bn->suff_stat[0] << " " << bn->suff_stat[1] << " " << bn->suff_stat[2] << endl;
-        
-    
-    return;
-}
 
 
 #ifndef NoRcpp

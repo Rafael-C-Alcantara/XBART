@@ -757,25 +757,36 @@ double DensityModel::density(std::vector<double> x_vec) const
 }
 
 
-void DensityModel::predict_std(const double *Xtestpointer, size_t N_test, size_t p, size_t num_trees, size_t num_sweeps, matrix<double> &yhats_test_xinfo, vector<vector<tree>> &trees, size_t data_ind)
+void DensityModel::predict_std(size_t num_trees, size_t num_sweeps, vector<vector<tree>> &trees, matrix<matrix<double>> &density_info, matrix<std::vector<std::vector<double>>> &cutpoints, size_t n_sim)
 {
 
     // matrix<double> output;
     size_t n = 100; // number of simulated points
-    std::vector<double> output(n);
-    // row : dimension of theta, column : number of trees
-    // ini_matrix(output, n, num_sweeps);
+    tree::npv bn;
+
 
     for (size_t sweeps = 0; sweeps < num_sweeps; sweeps++)
     {
-        // for (size_t data_ind = 0; data_ind < N_test; data_ind++)
-        // {
-        getDensityForObs_Outsample(output, trees[sweeps], data_ind, Xtestpointer, N_test, p, this->tau);
-
-        // take sum of predictions of each tree, as final prediction
-        yhats_test_xinfo[sweeps] = output;
-            
-        // }
+        COUT << "sweep " << sweeps << endl;
+        for(size_t tree = 0; tree < num_trees; tree++)
+        {
+            COUT << "tree " << tree << endl;
+            trees[sweeps][tree].getbots(bn);
+            size_t n_bn = bn.size();
+            COUT << "got bots" << endl;
+            cutpoints[sweeps][tree].resize(n_bn);
+            COUT << "resize cut" << endl;
+            ini_matrix(density_info[sweeps][tree], n_sim, n_bn);
+            COUT << "resize density"<<endl;
+            for(size_t i = 0; i < n_bn; i++)
+            {
+                bn[i]->getcutpoints(cutpoints[sweeps][tree][i]);
+                COUT << "gotcutpoints"<<endl;
+                bn[i]->getdensity(density_info[sweeps][tree][i], this->tau, this->range);
+                COUT << "gotdensity"<<endl;
+            }
+            bn.clear();
+        }
     }
     return;
 }
