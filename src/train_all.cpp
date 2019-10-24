@@ -1026,7 +1026,6 @@ Rcpp::List XBART_density_cpp(arma::mat y, arma::mat X, arma::mat y_prior, arma::
     ini_matrix(density_info, num_trees, num_sweeps);
     ini_matrix(cutpoints_info, num_trees, num_sweeps);
     
-    COUT << "start" << endl;
     size_t n_sim = 100;
     model->predict_std(num_trees, num_sweeps, *trees2, density_info, cutpoints_info, n_sim);
 
@@ -1083,7 +1082,7 @@ Rcpp::List XBART_density_cpp(arma::mat y, arma::mat X, arma::mat y_prior, arma::
         // Rcpp::Named("yhats_test") = yhats_test,
         Rcpp::Named("sigma") = sigma_draw,
         Rcpp::Named("importance") = split_count_sum,
-        Rcpp::Named("density_info") = Rcpp::List::create(Rcpp::Named("cutpoints") = 1, Rcpp::Named("density") = 2),
+        Rcpp::Named("density_info") = Rcpp::List::create(Rcpp::Named("cutpoints") = cutpoints, Rcpp::Named("density") = density),
         Rcpp::Named("model_list") = Rcpp::List::create(Rcpp::Named("tree_pnt") = tree_pnt, Rcpp::Named("y_mean") = y_mean, Rcpp::Named("p") = p));
 
 }

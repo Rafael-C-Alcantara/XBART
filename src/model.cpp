@@ -767,23 +767,16 @@ void DensityModel::predict_std(size_t num_trees, size_t num_sweeps, vector<vecto
 
     for (size_t sweeps = 0; sweeps < num_sweeps; sweeps++)
     {
-        COUT << "sweep " << sweeps << endl;
         for(size_t tree = 0; tree < num_trees; tree++)
         {
-            COUT << "tree " << tree << endl;
             trees[sweeps][tree].getbots(bn);
             size_t n_bn = bn.size();
-            COUT << "got bots" << endl;
             cutpoints[sweeps][tree].resize(n_bn);
-            COUT << "resize cut" << endl;
             ini_matrix(density_info[sweeps][tree], n_sim, n_bn);
-            COUT << "resize density"<<endl;
             for(size_t i = 0; i < n_bn; i++)
             {
                 bn[i]->getcutpoints(cutpoints[sweeps][tree][i]);
-                COUT << "gotcutpoints"<<endl;
                 bn[i]->getdensity(density_info[sweeps][tree][i], this->tau, this->range);
-                COUT << "gotdensity"<<endl;
             }
             bn.clear();
         }

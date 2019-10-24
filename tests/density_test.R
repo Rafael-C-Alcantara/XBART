@@ -30,6 +30,8 @@ get_XBART_params <- function(y) {
 
 #######################################################################
 library(XBART)
+require(ggplot2)
+require(tidyr)
 
 set.seed(90)
 new_data = TRUE # generate new data
@@ -141,63 +143,30 @@ print(time[3])
 # # stopifnot(xbart_rmse < 1)
 # # stopifnot(time_XBART < 5)
 
-# # distribution of specific categories
-# cat_match = function(x, cat){
-#   if (length(x) != length(cat)){cat('dimension not match')}
-#   return(all(x==cat))
-# }
+# distribution of specific categories
 
-# # xtest[1:4, ] = xtest[c(1, 4, 2, 3),]
-# color = c("lightblue1","darkolivegreen1","lightpink1", "darkseagreen1")
-# color_dark = c("blue", "green", "red", "darkseagreen4")
-# h <- hist(y, plot=FALSE, breaks = 15)
-# h$counts=h$counts/sum(h$counts)
-# plot(h, main = "", xlim = c(min(y), max(y)), ylim = c(0, 0.5))
-# color_ind=1
-# for (test_ind in 1:nrow(xtest)){
-#   cat1 = xtest[test_ind, ]
-#   ind = apply(x, 1, cat_match, cat=cat1)
-#   indt = apply(xtest, 1, cat_match, cat=cat1)
-  
-#   # plot.new()
-#   h <- hist(y[ind], plot=FALSE, breaks = 15)
-#   h$counts=h$counts/sum(h$counts)
-#   plot(h, main = "", xlim = c(min(y), max(y)), col=color[color_ind], add=TRUE)
-#   # abline(v = ftest[indt], col = 'red')
-#   # title(toString(cat1))
-#   color_ind = color_ind+1
-# }
-# for (test_ind in 1:nrow(xtest))
-# {
-#   lines(x = seq(-2, 4, length.out=100), y = exp(fit$yhats_test[test_ind, 1, ]), type = 'l', col=color_dark[test_ind])
-# }
+getcutpoints = function(cutpoints){
+  cutpoints = matrix(cutpoints, nrow = length(cutpoints)/3, byrow = TRUE)
+  output = ''
+  for(i in 1:nrow(cutpoints)){
+    if (cutpoints[i, 3]==1){
+      output <- paste(output, 'X', toString(cutpoints[i, 1]),'<=', toString(cutpoints[i, 2]), sep="")
+    } 
+    else{output = paste(output, 'X', toString(cutpoints[i, 1]),'>', toString(cutpoints[i, 2]), sep="")}
+    output = paste(output, "; ", sep="")
+  }
+  return(output)
+}
 
-
-# library(PBDE)
-# tau=0.01
-# y_test = as.matrix(seq(min(y), max(y), length.out=n))
-# density_x2_1_x1_0 = density_x2_1_x1_1 = density_x2_0 = rep(n, 0)
-# for (i in 1:length(y_test)){
-#   density_x2_1_x1_0[i] = exp(p_n(as.matrix(y_test[i]), as.matrix(y[x[,1]==0&x[,2]==1]),tau,TRUE)[[1]])
-#   density_x2_1_x1_1[i] = exp(p_n(as.matrix(y_test[i]), as.matrix(y[x[,2]==1&x[,1]==1]),tau,TRUE)[[1]])
-#   density_x2_0[i] = exp(p_n(as.matrix(y_test[i]), as.matrix(y[x[,2]==0]), tau,TRUE)[[1]])
-# }
-# h <- hist(y, plot=FALSE)
-# h$counts=h$counts/sum(h$counts)
-# plot(h, main = toString(tau), ylim = c(0, 0.5))
-# h <- hist(y[x[,2]==0], plot=FALSE)
-# h$counts=h$counts/sum(h$counts)
-# plot(h, main = toString(tau), col = "lightpink1", add=T)
-# h <- hist(y[x[,1]==0&x[,2]==1], plot=FALSE)
-# h$counts=h$counts/sum(h$counts)
-# plot(h, main = toString(tau), col = "darkolivegreen1", add=T)
-# h <- hist(y[x[,1]==1&x[,2]==1], plot=FALSE)
-# h$counts=h$counts/sum(h$counts)
-# plot(h, main = toString(tau), col = "lightskyblue1", add=T)
-# lines(y_test, density_x2_1_x1_0, type = 'l', col = "green")
-# lines(y_test, density_x2_1_x1_1, type = 'l', col = 'blue')
-# lines(y_test, density_x2_0, type = 'l', col = 'red')
-
-
-
+n_bot = length(fit$density_info$cutpoints[[1]][[1]])
+cutpoints = rep('', n_bot)
+for(i in 1:n_bot) {cutpoints[i] = getcutpoints(fit$density_info$cutpoints[[1]][[1]][[i]])}
+density = as.data.frame(fit$density_info$density[[1]][[1]], col.names = 1:n_bot)
+density = gather(density, key = "group", value = "density")
+p <- ggplot(data=as.data.frame(y), aes(y)) + 
+  stat_bin(aes(y=..density..), fill = "grey69") +
+  geom_line(data=density, aes(x = rep(seq(y_range[1], y_range[2], length.out=100), n_bot),
+                      y = density, group = group, colour=group)) +
+  scale_color_brewer(palette="Dark2")
+p
 

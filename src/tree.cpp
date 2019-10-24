@@ -191,10 +191,8 @@ tree::tree_p tree::gettop()
 //get all the cutpoints of a bottom node
 void tree::getcutpoints(std::vector<double> &cutpoints)
 {
-    std::cout << "node depth " << this->getdepth() << endl;
     // If the node has a parent, first record it's parent's cutpoints
     if (p){
-        COUT << "go parent"<<endl; 
         p->getcutpoints(cutpoints);
 
         bool is_left = false;
@@ -202,7 +200,7 @@ void tree::getcutpoints(std::vector<double> &cutpoints)
         cutpoints.push_back(double(p->v));
         cutpoints.push_back(double(p->c));
         cutpoints.push_back(double(is_left));
-        std::cout << "node v " << p->v << " node c " << p->c << " is left " << is_left << endl;
+        // std::cout << "node v " << p->v << " node c " << p->c << " is left " << is_left << endl;
     }
 }
 
