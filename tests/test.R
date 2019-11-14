@@ -37,7 +37,7 @@ verbose = FALSE # print the progress on screen
 if (small_case) {
   n = 10000 # size of training set
   nt = 5000 # size of testing set
-  d = 20 # number of TOTAL variables
+  d = 10 # number of TOTAL variables
   dcat = 10 # number of categorical variables
   # must be d >= dcat
   # (X_continuous, X_categorical), 10 and 10 for each case, 20 in total
@@ -83,7 +83,9 @@ if (new_data) {
   }
 
   f = function(x) {
-    sin(rowSums(x[, 3:4] ^ 2)) + sin(rowSums(x[, 1:2] ^ 2)) + (x[, 15] + x[, 14]) ^ 2 * (x[, 1] + x[, 2] ^ 2) / (3 + x[, 3] + x[, 14] ^ 2)
+    shape = x[1] + 2*x[2]
+    rgamma(1, shape, rate = 1/shape)
+    # sin(rowSums(x[, 3:4] ^ 2)) + sin(rowSums(x[, 1:2] ^ 2)) + (x[, 15] + x[, 14]) ^ 2 * (x[, 1] + x[, 2] ^ 2) / (3 + x[, 3] + x[, 14] ^ 2)
     #rowSums(x[,1:30]^2)
     #pmax(x[,1]*x[,2], abs(x[,3])*(x[,10]>x[,15])+abs(x[,4])*(x[,10]<=x[,15]))
     #
@@ -92,15 +94,17 @@ if (new_data) {
   # to test if ties cause a crash in continuous variables
   x[, 1] = round(x[, 1], 4)
   #xtest[,1] = round(xtest[,1],2)
-  ftrue = f(x)
-  ftest = f(xtest)
+  # ftrue = f(x)
+  # ftest = f(xtest)
+  ftrue = apply(x, 1, f)
+  ftest = apply(xtest, 1, f)
   sigma = sd(ftrue)
 
   #y = ftrue + sigma*(rgamma(n,1,1)-1)/(3+x[,d])
   #y_test = ftest + sigma*(rgamma(nt,1,1)-1)/(3+xtest[,d])
 
-  y = ftrue + sigma * rnorm(n)
-  y_test = ftest + sigma * rnorm(nt)
+  y = ftrue #+ sigma * rnorm(n)
+  y_test = ftest #+ sigma * rnorm(nt)
 }
 
 #######################################################################

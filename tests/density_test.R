@@ -1,15 +1,13 @@
+n = 500 # size of training set
+d = 2 # number of TOTAL variables
+dcat = 2 # number of categorical variables
+
+title = paste("Case 2 Gamma:", "N=", toString(n), ",dcat=", toString(dcat))
+
+
 #######################################################################
 # set parameters of XBART
 get_XBART_params <- function(y) {
-    # XBART_params = list(num_trees = 1, # number of trees 
-    #                   num_sweeps = 1, # number of sweeps (samples of the forest)
-    #                   n_min = 1, # minimal node size
-    #                   alpha = 0.95, # BART prior parameter 
-    #                   beta = 1.25, # BART prior parameter
-    #                   mtry = 10, # number of variables sampled in each split
-    #                   burnin = 0,
-    #                   no_split_penality = "Auto"
-    #                   ) # burnin of MCMC sample
   XBART_params = list(num_trees = 1, # number of trees 
                       num_sweeps = 1, # number of sweeps (samples of the forest)
                       n_min = 1, # minimal node size
@@ -23,7 +21,8 @@ get_XBART_params <- function(y) {
   XBART_params$max_depth = 250
   XBART_params$num_cutpoints = 50;
   # number of adaptive cutpoints
-  XBART_params$tau = 0.01 # var(y) / num_tress # prior variance of mu (leaf parameter)
+  ### tau can not be too small
+  XBART_params$tau = 0.1 # var(y) / num_tress # prior variance of mu (leaf parameter)
   return(XBART_params)
 }
 
@@ -41,26 +40,6 @@ parl = TRUE # parallel computing
 small_case = TRUE # run simulation on small data set
 verbose = TRUE # print the progress on screen
 
-
-if (small_case) {
-  n = 200 # size of training set
-  nt = 100 # size of testing set
-  d = 2 # number of TOTAL variables
-  dcat = 2 # number of categorical variables
-  # must be d >= dcat
-  # (X_continuous, X_categorical), 10 and 10 for each case, 20 in total
-} else {
-  n = 1000000
-  nt = 10000
-  d = 50
-  dcat = 0
-}
-
-
-
-
-
-
 #######################################################################
 # Data generating process
 
@@ -68,7 +47,6 @@ if (small_case) {
 # Have to put continuous variables first, then categorical variables  #
 # X = (X_continuous, X_cateogrical)                                   #
 #######################################################################
-if (new_data) {
   if (d != dcat) {
     x = matrix(runif((d - dcat) * n, -2, 2), n, d - dcat)
     if (dcat > 0) {
@@ -80,24 +58,25 @@ if (new_data) {
   }
 
   f = function(x) {
-    sin(x[, 2] ^ 2) + sin(rowSums(x[, 1:2] ^ 2)) + (x[, 1] + x[, 2] ^ 2) / (3 + x[, 1])
-    # sin(x[, 3] ^ 2) + sin(rowSums(x[, 1:2] ^ 2)) + (x[, 1] + x[, 2] ^ 2) / (3 + x[, 3])
-    # sin(rowSums(x[, 3:4] ^ 2)) + sin(rowSums(x[, 1:2] ^ 2)) + (x[, 1] + x[, 2] ^ 2) / (3 + x[, 3] + x[, 4] ^ 2)
-    # sin(rowSums(x[, 3:4] ^ 2)) + sin(rowSums(x[, 1:2] ^ 2)) + (x[, 5] + x[, 6]) ^ 2 * (x[, 1] + x[, 2] ^ 2) / (3 + x[, 3] + x[, 4] ^ 2)
+    # sin(x[, 2] ^ 2) + sin(rowSums(x[, 1:2] ^ 2)) + (x[, 1] + x[, 2] ^ 2) / (3 + x[, 1]) # func1
+    # cos(x[, 2] ^ 2) + sin(rowSums(x[, 1:2] ^ 2)) + (x[, 1] + x[, 2] ^ 2) / (3 + x[, 1]) # func 2
+    # shape = 0.1*x[1] + 0.2*x[2];  rgamma(1, shape, rate = 1/shape) # gamma
+    rnorm(1, 0, 3*x[1] + 6*x[2])
   }
 
-  # to test if ties cause a crash in continuous variables
-  x[, 1] = round(x[, 1], 4)
-  ftrue = f(x)
+  # ftrue = f(x)
+  ftrue = apply(x, 1, f)
   sigma = sd(ftrue)
 
   #y = ftrue + sigma*(rgamma(n,1,1)-1)/(3+x[,d])
 
-  y = ftrue + sigma * rnorm(n)
+  # y = ftrue + sigma * rnorm(n)
+  ### !!! R session failed when I didn't scale y, the range of y is from 0 to 34 with 1000 data points
   # sample prior from y
+  y=ftrue
+  # y = (ftrue-min(ftrue))/(max(ftrue)-min(ftrue))
   y_prior = y[sample(n, 10)]
   y_range = c(min(y), max(y))
-}
 
 #######################################################################
 # XBART
@@ -158,15 +137,22 @@ getcutpoints = function(cutpoints){
   return(output)
 }
 
+
+
 n_bot = length(fit$density_info$cutpoints[[1]][[1]])
 cutpoints = rep('', n_bot)
 for(i in 1:n_bot) {cutpoints[i] = getcutpoints(fit$density_info$cutpoints[[1]][[1]][[i]])}
 density = as.data.frame(fit$density_info$density[[1]][[1]], col.names = 1:n_bot)
 density = gather(density, key = "group", value = "density")
+
+
+
+title = paste(title, ", tau=", toString(params$tau), sep="")
 p <- ggplot(data=as.data.frame(y), aes(y)) + 
   stat_bin(aes(y=..density..), fill = "grey69") +
   geom_line(data=density, aes(x = rep(seq(y_range[1], y_range[2], length.out=100), n_bot),
                       y = density, group = group, colour=group)) +
-  scale_color_brewer(palette="Dark2")
-p
+  scale_color_brewer(palette="Dark2") + 
+  labs(x = "y", y = "density", title = title)
+ggsave(filename = paste("pics/", title, ".png", sep=""), width=5,height = 5)
 

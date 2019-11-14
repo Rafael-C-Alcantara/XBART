@@ -6,6 +6,7 @@
 #include <sstream>
 #include <string>
 #include "gsl/gsl_integration.h"
+#include "density.h"
 
 
 using namespace std;
@@ -16,31 +17,10 @@ std::ostream &operator<<(std::ostream &out, const std::vector<size_t> &v);
 std::ostream &operator<<(std::ostream &out, const std::vector<std::vector<double>> &v);
 std::ostream &operator<<(std::ostream &out, const std::vector<std::vector<size_t>> &v);
 
-struct Params{
-public:
-    double n; // lenthg of x_vec
-    double tau;
-    double mu; // lognormal mean
-    double sigma; // lognormal sd
-    double x; // x value to be valualted
-    std::vector<double>  x_vec; // vector of x_i's
-    double iter;
-
-    Params(double x, std::vector<double> x_vec, double tau, double mu, double sigma)
-    {
-        this->iter = 0;
-        this->tau = tau;
-        this->mu = mu;
-        this->sigma = sigma;
-        this->x = x;
-        this->x_vec = x_vec;
-        this->n = x_vec.size();
-        return;
-    }
-};
 
 double kernal(double x, void * params)
 	{   
+        
         Params p = * (Params *) params;
         double tau = p.tau;
         double mu = p.mu;
@@ -49,10 +29,13 @@ double kernal(double x, void * params)
         std::vector<double> y_vec = p.x_vec;
         double n = y_vec.size();
         double iter = p.iter;
-        
-		return exp( - pow(y - y_vec[iter], 2) / 2 / tau / (x+1) - pow(log(x) - mu, 2) / 2 / pow(sigma, 2) ) / x / sqrt(x + 1);
+
+        double output =  exp( - pow(y - y_vec[iter], 2) / 2 / tau / (x+1) - pow(log(x) - mu, 2) / 2 / pow(sigma, 2) ) / x / sqrt(x + 1);
+        return output;
+		// return exp( - pow(y - y_vec[iter], 2) / 2 / tau / (x+1) - pow(log(x) - mu, 2) / 2 / pow(sigma, 2) ) / x / sqrt(x + 1);
         // return 0.0;
     }
+
 
 double test_f(double x, void * params)
 {
@@ -62,6 +45,11 @@ double test_f(double x, void * params)
 
     double density_single(double x, std::vector<double> x_vec, double tau, double mu, double sigma)
     {
+        // std::cout << "x " << x << endl;
+        // std::cout << "x_vec " << x_vec << endl;
+        // std::cout << "mu " << mu << endl;
+        // std::cout << "simga " << sigma << endl;
+
         double output = 0.0;
         Params params(x, x_vec, tau, mu, sigma);
         std::vector<double> int_vec(params.n);
@@ -74,12 +62,14 @@ double test_f(double x, void * params)
         gsl_integration_workspace *w = gsl_integration_workspace_alloc(3000);
        
         for (size_t i = 0; i < params.n; i++){
+            // std::cout << "density_single loop i " << i << endl;
             
             gsl_integration_qagiu (&F, 0, 0, 1e-6, 1000, w, &int_vec[i], &error[i]);
-
+            // std::cout << i << ": " << int_vec[i] << endl;
             params.iter += 1;
             F.params = &params;
         }
+        
         output = std::accumulate(int_vec.begin(),int_vec.end(), 0.0) / params.n / 2 / 3.1415926 / sqrt(tau) / sigma;
         
         gsl_integration_workspace_free(w);
@@ -104,7 +94,7 @@ double density_vec(std::vector<double> &x_vec, std::vector<double> &x_prior, dou
 
     size_t h;
     size_t n = x_prior.size();
-    size_t N = x_vec.size() + n + 1;
+    size_t N = x_vec.size() + n + 1000;
     std::vector<double> x_density(x_vec.size());
     double eta_n, rho_h, nu_n1, nu_n2, nu_n, mu_n, sigma_n, temp, output, x;
     eta_n = nu_n1 = nu_n2 = 1;
