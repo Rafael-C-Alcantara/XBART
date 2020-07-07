@@ -249,7 +249,7 @@ void mcmc_loop_multinomial(matrix<size_t> &Xorder_std, bool verbose,
                 }
             }
             // update partial fits for the next tree
-            model->update_state(state, tree_ind, x_struct);
+            // model->update_state(state, tree_ind, x_struct);
 
             model->state_sweep(tree_ind, state->num_trees, state->residual_std, x_struct);
 

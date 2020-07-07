@@ -237,11 +237,13 @@ void LogitModel::incSuffStat(matrix<double> &residual_std, size_t index_next_obs
 
     // suffstats[(*y_size_t)[index_next_obs]] += 1 + pop * wrap(weight);
     suffstats[(*y_size_t)[index_next_obs]] += pop * wrap(weight);
+    suffstats[dim_residual * 2 + (*y_size_t)[index_next_obs]] += lgamma(pop * wrap(weight) + 1);
 
     for (size_t j = 0; j < dim_theta; ++j)
     {
         // suffstats[j] += class_count[j]; // pseudo observation
-        suffstats[dim_theta + j] += (*phi)[index_next_obs] * residual_std[j][index_next_obs];
+        // suffstats[dim_theta + j] += (*phi)[index_next_obs] * residual_std[j][index_next_obs];
+        suffstats[dim_theta + j] += residual_std[j][index_next_obs];
     }
 
     return;
@@ -269,7 +271,7 @@ void LogitModel::samplePars(std::unique_ptr<State> &state, std::vector<double> &
         std::gamma_distribution<double> gammadist(tau_a + suff_stat[j], 1.0);
 
         // !! devide s by min_sum_fits
-        theta_vector[j] = gammadist(state->gen) / (tau_b + suff_stat[dim_theta + j]);
+        theta_vector[j] = gammadist(state->gen) / (tau_b + suff_stat[dim_residual + j]);
     }
     // cout << "theta_vector" << theta_vector << endl;
 
@@ -334,34 +336,34 @@ void LogitModel::update_state(std::unique_ptr<State> &state, size_t tree_ind, st
 
     // Draw phi
     // std::gamma_distribution<double> gammadist(weight, 1.0);
-    std::gamma_distribution<double> gammadist(pop * wrap(weight), 1.0);
-    // std::vector<double> sum_fits_v (state->residual_std[0].size(), 0.0);
+    // std::gamma_distribution<double> gammadist(pop * wrap(weight), 1.0);
+    // // std::vector<double> sum_fits_v (state->residual_std[0].size(), 0.0);
 
-    for (size_t i = 0; i < state->residual_std[0].size(); i++)
-    {
-        (*phi)[i] = gammadist(state->gen) / (1.0*sum_fits[i]); 
-    }
+    // for (size_t i = 0; i < state->residual_std[0].size(); i++)
+    // {
+    //     (*phi)[i] = gammadist(state->gen) / (1.0*sum_fits[i]); 
+    // }
 
-    // get lambdas
-    // dimension of state->lambdas (num_trees, num_bottoms, num_class)
-    size_t count_lambdas = 0;
-    std::vector<double> mean_lambda(dim_residual, 0.0);
-    for(size_t i = 0; i < state->num_trees; i++)
-    {
-        for(size_t j = 0; j < state->lambdas[i].size(); j++)
-        {
-            for (size_t k = 0; k < dim_residual; k++)
-            {
-                mean_lambda[k] += state->lambdas[i][j][k];
-            }
-            count_lambdas += 1;
-        }
-    }
-    for (size_t k = 0; k < dim_residual; k++ )
-    {
-        mean_lambda[k] = mean_lambda[k] / (double) count_lambdas;
-    }
-    // cout << "mean_lambdas " << mean_lambda << endl;
+    // // get lambdas
+    // // dimension of state->lambdas (num_trees, num_bottoms, num_class)
+    // size_t count_lambdas = 0;
+    // std::vector<double> mean_lambda(dim_residual, 0.0);
+    // for(size_t i = 0; i < state->num_trees; i++)
+    // {
+    //     for(size_t j = 0; j < state->lambdas[i].size(); j++)
+    //     {
+    //         for (size_t k = 0; k < dim_residual; k++)
+    //         {
+    //             mean_lambda[k] += state->lambdas[i][j][k];
+    //         }
+    //         count_lambdas += 1;
+    //     }
+    // }
+    // for (size_t k = 0; k < dim_residual; k++ )
+    // {
+    //     mean_lambda[k] = mean_lambda[k] / (double) count_lambdas;
+    // }
+    // // cout << "mean_lambdas " << mean_lambda << endl;
 
     return;
 }
@@ -383,7 +385,7 @@ void LogitModel::initialize_root_suffstat(std::unique_ptr<State> &state, std::ve
 
     // remove resizing it does not work, strange
 
-    suff_stat.resize(2 * dim_theta);
+    suff_stat.resize(3 * dim_theta);
     std::fill(suff_stat.begin(), suff_stat.end(), 0.0);
     for (size_t i = 0; i < state->n_y; i++)
     {
