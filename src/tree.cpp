@@ -995,6 +995,7 @@ void tree::grow_from_root_separate_tree(std::unique_ptr<State> &state, matrix<si
     // do I still need this? need this for the root node
     if (update_theta)
     {
+        cout << "update_theta" << endl;
         model->samplePars(state, this->suff_stat, this->theta_vector, this->prob_leaf);
     }
 
@@ -1043,6 +1044,7 @@ void tree::grow_from_root_separate_tree(std::unique_ptr<State> &state, matrix<si
 
     if (!no_split)
     {
+        cout << "BART likelihood" << endl;
         BART_likelihood_all(Xorder_std, no_split, split_var, split_point, subset_vars, X_counts, X_num_unique, model, x_struct, state, this, update_split_prob);
     }
 
@@ -1050,6 +1052,7 @@ void tree::grow_from_root_separate_tree(std::unique_ptr<State> &state, matrix<si
 
     if (no_split == true)
     {
+        cout << "no split" << endl;
         if (!update_split_prob)
         {
             size_t j = model->get_class_operating();
@@ -1073,6 +1076,7 @@ void tree::grow_from_root_separate_tree(std::unique_ptr<State> &state, matrix<si
 
     if (grow_new_tree)
     {
+        cout < "get c_index" << endl;
         // If GROW FROM ROOT MODE
         this->v = split_var;
         this->c = *(state->X_std + state->n_y * split_var + Xorder_std[split_var][split_point]);
