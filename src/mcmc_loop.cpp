@@ -335,7 +335,7 @@ void mcmc_loop_multinomial_sample_per_tree(matrix<size_t> &Xorder_std, bool verb
             }
             
             omp_set_max_active_levels(3);
-            #pragma omp parallel default(none) shared(trees, sweeps, state, Xorder_std, x_struct, model, tree_ind)
+            #pragma omp parallel shared(trees, sweeps, state, Xorder_std, x_struct, model, tree_ind, std::cout)
             {       
                 #pragma omp sections
                 {
@@ -343,7 +343,7 @@ void mcmc_loop_multinomial_sample_per_tree(matrix<size_t> &Xorder_std, bool verb
                     {
                         for (size_t class_ind = 0; class_ind < model->dim_residual; class_ind++)
                         {
-                            // cout << "class_ind " << class_ind << endl;
+                            cout << "class_ind " << class_ind << endl;
                             model->set_class_operating(class_ind);
 
                             state->lambdas_separate[tree_ind][class_ind].clear();
@@ -351,7 +351,7 @@ void mcmc_loop_multinomial_sample_per_tree(matrix<size_t> &Xorder_std, bool verb
                             model->initialize_root_suffstat(state, trees[class_ind][sweeps][tree_ind].suff_stat);
 
                             trees[class_ind][sweeps][tree_ind].theta_vector.resize(model->dim_residual);
-                            // cout << "grow from root" << endl;
+                            cout << "grow from root" << endl;
                             trees[class_ind][sweeps][tree_ind].grow_from_root_separate_tree(state, Xorder_std, x_struct->X_counts, x_struct->X_num_unique, model, x_struct, sweeps, tree_ind, true, false, true);
                         }
                     }
