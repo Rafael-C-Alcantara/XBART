@@ -1077,7 +1077,6 @@ void tree::grow_from_root_separate_tree(std::unique_ptr<State> &state, matrix<si
         // If GROW FROM ROOT MODE
         this->v = split_var;
         this->c = *(state->X_std + state->n_y * split_var + Xorder_std[split_var][split_point]);
-        cout << "v = " << this->v << ", c = " << this->c << ", split_point = "<< split_point << endl;
 
         // cout << "size xorder splitvar = " << (state->Xorder_std[split_var].size()) << ", Xorder splitpoint = " << Xorder_std[split_var][split_point] << endl;
         size_t index_in_full = 0;
@@ -1483,7 +1482,6 @@ void BART_likelihood_all(matrix<size_t> &Xorder_std, bool &no_split, size_t &spl
     // sampling cutpoints
     if (N <= state->n_cutpoints + 1 + 2 * state->n_min)
     {
-        cout << "N <= n_cutpoints"<<endl;
         // N - 1 - 2 * Nmin <= Ncutpoints, consider all data points
 
         // if number of observations is smaller than Ncutpoints, all data are splitpoint candidates
@@ -1560,11 +1558,9 @@ void BART_likelihood_all(matrix<size_t> &Xorder_std, bool &no_split, size_t &spl
         }
         else
         {
-            cout << "split at categorical variable" << endl;
             // split at categorical variable
             size_t start;
             ind = ind - loglike_start;
-            cout << "ind = " << ind << ",  loglike_start = " << loglike_start << endl;
             for (size_t i = 0; i < (x_struct->variable_ind.size() - 1); i++)
             {
                 if (x_struct->variable_ind[i] <= ind && x_struct->variable_ind[i + 1] > ind)
@@ -1576,13 +1572,12 @@ void BART_likelihood_all(matrix<size_t> &Xorder_std, bool &no_split, size_t &spl
             // count how many
             split_point = std::accumulate(X_counts.begin() + start, X_counts.begin() + ind + 1, 0);
             // minus one for correct index (start from 0)
-            split_point = split_point - 1;
+            if (split_point > 0 ){split_point = split_point - 1;}
             split_var = split_var + state->p_continuous;
         }
     }
     else
     {
-        cout << "use adaptive number of cutpoints" << endl;
         // use adaptive number of cutpoints
 
         std::vector<size_t> candidate_index(state->n_cutpoints);
@@ -1625,10 +1620,8 @@ void BART_likelihood_all(matrix<size_t> &Xorder_std, bool &no_split, size_t &spl
         else
         {
             // split at categorical variable
-            cout << "split at categorical variable" << endl;
             size_t start;
             ind = ind - loglike_start;
-            cout << "ind = " << ind << ", loglike_start = " << loglike_start << endl;
             for (size_t i = 0; i < (x_struct->variable_ind.size() - 1); i++)
             {
                 if (x_struct->variable_ind[i] <= ind && x_struct->variable_ind[i + 1] > ind)
@@ -1637,14 +1630,10 @@ void BART_likelihood_all(matrix<size_t> &Xorder_std, bool &no_split, size_t &spl
                 }
             }
             start = x_struct->variable_ind[split_var];
-            cout << "split_var = " << split_var << ", start = " << start << endl;
             // count how many
             split_point = std::accumulate(X_counts.begin() + start, X_counts.begin() + ind + 1, 0);
             // minus one for correct index (start from 0)
-            cout << "split_point = " << split_point - 1 << endl;
-            if (split_point == 0){cout << "X_counts " << X_counts << endl;}
-            split_point = split_point - 1;
-            
+            if (split_point > 0 ){split_point = split_point - 1;}
             split_var = split_var + state->p_continuous;
         }
     }
