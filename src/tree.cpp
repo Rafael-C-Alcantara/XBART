@@ -1564,7 +1564,7 @@ void BART_likelihood_all(matrix<size_t> &Xorder_std, bool &no_split, size_t &spl
             // split at categorical variable
             size_t start;
             ind = ind - loglike_start;
-            cout << "ind = " << ind << "loglike_start = " << loglike_start << endl;
+            cout << "ind = " << ind << ",  loglike_start = " << loglike_start << endl;
             for (size_t i = 0; i < (x_struct->variable_ind.size() - 1); i++)
             {
                 if (x_struct->variable_ind[i] <= ind && x_struct->variable_ind[i + 1] > ind)
@@ -1628,7 +1628,7 @@ void BART_likelihood_all(matrix<size_t> &Xorder_std, bool &no_split, size_t &spl
             cout << "split at categorical variable" << endl;
             size_t start;
             ind = ind - loglike_start;
-            cout << "ind = " << ind << "loglike_start = " << loglike_start << endl;
+            cout << "ind = " << ind << ", loglike_start = " << loglike_start << endl;
             for (size_t i = 0; i < (x_struct->variable_ind.size() - 1); i++)
             {
                 if (x_struct->variable_ind[i] <= ind && x_struct->variable_ind[i + 1] > ind)
@@ -1641,6 +1641,8 @@ void BART_likelihood_all(matrix<size_t> &Xorder_std, bool &no_split, size_t &spl
             split_point = std::accumulate(X_counts.begin() + start, X_counts.begin() + ind + 1, 0);
             // minus one for correct index (start from 0)
             split_point = split_point - 1;
+            cout << "split_point = " << split_point << endl;
+            if (split_point > 100000000){cout << "X_counts " << X_counts << endl;}
             split_var = split_var + state->p_continuous;
         }
     }
