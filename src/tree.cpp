@@ -995,7 +995,6 @@ void tree::grow_from_root_separate_tree(std::unique_ptr<State> &state, matrix<si
     // do I still need this? need this for the root node
     if (update_theta)
     {
-        cout << "update_theta" << endl;
         model->samplePars(state, this->suff_stat, this->theta_vector, this->prob_leaf);
     }
 
@@ -1074,21 +1073,21 @@ void tree::grow_from_root_separate_tree(std::unique_ptr<State> &state, matrix<si
 
     if (grow_new_tree)
     {
-        cout << "get c_index" << endl;
+        // cout << "get c_index" << endl;
         // If GROW FROM ROOT MODE
         this->v = split_var;
         this->c = *(state->X_std + state->n_y * split_var + Xorder_std[split_var][split_point]);
         cout << "v = " << this->v << ", c = " << this->c << ", split_point = "<< split_point << endl;
 
-        cout << "size xorder splitvar = " << (state->Xorder_std[split_var].size()) << ", Xorder splitpoint = " << Xorder_std[split_var][split_point] << endl;
+        // cout << "size xorder splitvar = " << (state->Xorder_std[split_var].size()) << ", Xorder splitpoint = " << Xorder_std[split_var][split_point] << endl;
         size_t index_in_full = 0;
         while((state->Xorder_std)[split_var][index_in_full]!=Xorder_std[split_var][split_point]){
             index_in_full++;
         }
 
-        cout << "index_in_full = " << index_in_full << endl;
+        // cout << "index_in_full = " << index_in_full << endl;
         this->c_index = (size_t) round((double) index_in_full / (double) state->n_y * (double)state->n_cutpoints);
-        cout << "c_index = " << this->c_index << endl;
+        // cout << "c_index = " << this->c_index << endl;
     }
 
     // Update Cutpoint to be a true seperating point
@@ -1097,7 +1096,7 @@ void tree::grow_from_root_separate_tree(std::unique_ptr<State> &state, matrix<si
     {
         split_point = split_point + 1;
     }
-    cout << "split_point = " << split_point << endl;
+    // cout << "split_point = " << split_point << endl;
 
     // If our current split is same as parent, exit
     if ((this->p) && (this->v == (this->p)->v) && (this->c == (this->p)->c))
@@ -1385,7 +1384,8 @@ void split_xorder_std_categorical(matrix<size_t> &Xorder_left_std, matrix<size_t
                 X_num_unique_right[i - state->p_continuous] = X_num_unique_right[i - state->p_continuous] + 1;
             }
         }
-
+        cout << "X_counts left = " << X_counts_left << endl;
+        cout << "X_counts right = " << X_counts_right << endl;
     }
 
     model->calculateOtherSideSuffStat(current_node->suff_stat, current_node->l->suff_stat, current_node->r->suff_stat, N_Xorder, N_Xorder_left, N_Xorder_right, compute_left_side);
@@ -1484,7 +1484,7 @@ void BART_likelihood_all(matrix<size_t> &Xorder_std, bool &no_split, size_t &spl
     // sampling cutpoints
     if (N <= state->n_cutpoints + 1 + 2 * state->n_min)
     {
-
+        cout << "N <= n_cutpoints"<<endl;
         // N - 1 - 2 * Nmin <= Ncutpoints, consider all data points
 
         // if number of observations is smaller than Ncutpoints, all data are splitpoint candidates
@@ -1561,9 +1561,11 @@ void BART_likelihood_all(matrix<size_t> &Xorder_std, bool &no_split, size_t &spl
         }
         else
         {
+            cout << "split at categorical variable" << endl;
             // split at categorical variable
             size_t start;
             ind = ind - loglike_start;
+            cout << "ind = " << ind << "loglike_start = " << loglike_start << endl;
             for (size_t i = 0; i < (x_struct->variable_ind.size() - 1); i++)
             {
                 if (x_struct->variable_ind[i] <= ind && x_struct->variable_ind[i + 1] > ind)
@@ -1581,6 +1583,7 @@ void BART_likelihood_all(matrix<size_t> &Xorder_std, bool &no_split, size_t &spl
     }
     else
     {
+        cout << "use adaptive number of cutpoints" << endl;
         // use adaptive number of cutpoints
 
         std::vector<size_t> candidate_index(state->n_cutpoints);
@@ -1623,8 +1626,10 @@ void BART_likelihood_all(matrix<size_t> &Xorder_std, bool &no_split, size_t &spl
         else
         {
             // split at categorical variable
+            cout << "split at categorical variable" << endl;
             size_t start;
             ind = ind - loglike_start;
+            cout << "ind = " << ind << "loglike_start = " << loglike_start << endl;
             for (size_t i = 0; i < (x_struct->variable_ind.size() - 1); i++)
             {
                 if (x_struct->variable_ind[i] <= ind && x_struct->variable_ind[i + 1] > ind)
