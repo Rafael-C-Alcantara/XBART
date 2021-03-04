@@ -838,7 +838,6 @@ std::unique_ptr<X_struct> &x_struct, const size_t &sweeps, const size_t &tree_in
 
     if (no_split == true)
     { 
-        // cout << "no split at depth " << this->depth << endl;
         if (!update_split_prob)
         {
             // #pragma omp parallel for schedule(static, 128)
@@ -850,18 +849,8 @@ std::unique_ptr<X_struct> &x_struct, const size_t &sweeps, const size_t &tree_in
             #pragma omp critical
             state->lambdas[tree_ind].push_back(this->theta_vector);
         }
-
-        // if (update_theta)
-        // {
-        //     model->samplePars(state, this->suff_stat, this->theta_vector, this->prob_leaf);
-        // }
-
         this->l = 0;
         this->r = 0;
-
-        // update leaf prob, for MH update useage
-        // this->loglike_node = model->likelihood_no_split(this->suff_stat, state);
-
         return;
     }
 
@@ -900,7 +889,9 @@ std::unique_ptr<X_struct> &x_struct, const size_t &sweeps, const size_t &tree_in
             #pragma omp critical
             state->lambdas[tree_ind].push_back(this->theta_vector);
         }
-        // cout << "unusual return "  << endl;
+        cout << "unusual return "  << endl;
+        this->l = 0;
+        this->r = 0;
         return;
     }
 

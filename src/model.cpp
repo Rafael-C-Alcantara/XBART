@@ -280,6 +280,7 @@ void LogitModel::samplePars(std::unique_ptr<State> &state, std::vector<double> &
         }
         std::gamma_distribution<double> gammadist(tau_a + suff_stat[j] + 1, 1.0); // consider adding 1 sudo obs to prevent 0 theta value
         theta_vector[j] = gammadist(state->gen) / (tau_b + suff_stat[dim_theta + j]);
+        if (isnan(theta_vector[j])) {cout << "theta " << j << " is nan, r = " << suff_stat[j] << ", s = " << suff_stat[dim_theta + j] << endl; exit(1);}
     }
     return;
 }
