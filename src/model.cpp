@@ -300,9 +300,14 @@ void LogitModel::update_state(std::unique_ptr<State>& state, size_t tree_ind, st
         for (size_t j = 0; j < dim_residual; ++j)
         {
             sum_fits += exp(state->residual_std[j][i]) * (*(x_struct->data_pointers[tree_ind][i]))[j]; // f_j(x_i) = \prod lambdas
+            if (isnan((*(x_struct->data_pointers[tree_ind][i]))[j])) {
+                cout << "datapointer is nan. tree = " << tree_ind << ", i = " << i << ", j = " << j << endl;
+                exit(1);
+            }
         }
         // Sample phi
         (*phi)[i] = gammadist(state->gen) / (1.0 * sum_fits);
+        if (isnan((*phi)[i])) {cout << "phi " << i << " is nan"<< endl; exit(1);}
         // calculate logloss
         logloss += -log(exp(state->residual_std[y_i][i]) * (*(x_struct->data_pointers[tree_ind][i]))[y_i] / sum_fits); // logloss =  - log(p_j) 
     }
@@ -310,6 +315,7 @@ void LogitModel::update_state(std::unique_ptr<State>& state, size_t tree_ind, st
     if (update_weight){
         std::gamma_distribution<> d(state->n_y, 1);
         weight = d(state->gen) / (hmult * logloss + heps * (double)state->n_y) + 1; // it's like shift p down by
+        if (isnan(weight)) {cout << "weight is nan" << ", logloss = " << logloss << endl; exit(1);}
     }
 
     return;
