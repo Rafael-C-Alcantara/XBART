@@ -372,10 +372,22 @@ void LogitModel::calculateOtherSideSuffStat(std::vector<double> &parent_suff_sta
     if (compute_left_side)
     {
         rchild_suff_stat = parent_suff_stat - lchild_suff_stat;
+        for (size_t i = 0; i < rchild_suff_stat.size(); i++){
+            if(rchild_suff_stat[i] < 0) {
+                cout << "warning: suff stat " << i << ", parent = " << parent_suff_stat[i] << ", left = " << lchild_suff_stat[i] << ", right = " << rchild_suff_stat[i] << endl;
+                rchild_suff_stat[i] = 0;
+            }
+        }
     }
     else
     {
         lchild_suff_stat = parent_suff_stat - rchild_suff_stat;
+        for (size_t i = 0; i < lchild_suff_stat.size(); i++){
+            if(lchild_suff_stat[i] < 0) {
+                cout << "warning: suff stat " << i << ", parent = " << parent_suff_stat[i] << ", left = " << lchild_suff_stat[i] << ", right = " << rchild_suff_stat[i] << endl;
+                lchild_suff_stat[i] = 0;
+            }
+        }
     }
     return;
 }
