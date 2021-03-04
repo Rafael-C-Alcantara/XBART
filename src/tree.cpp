@@ -1384,8 +1384,7 @@ void split_xorder_std_categorical(matrix<size_t> &Xorder_left_std, matrix<size_t
                 X_num_unique_right[i - state->p_continuous] = X_num_unique_right[i - state->p_continuous] + 1;
             }
         }
-        cout << "X_counts left = " << X_counts_left << endl;
-        cout << "X_counts right = " << X_counts_right << endl;
+        cout << "X_counts left = " << X_counts_left[0] << " right = " << X_counts_right[0] << endl;
     }
 
     model->calculateOtherSideSuffStat(current_node->suff_stat, current_node->l->suff_stat, current_node->r->suff_stat, N_Xorder, N_Xorder_left, N_Xorder_right, compute_left_side);
