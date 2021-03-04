@@ -689,9 +689,14 @@ void LogitModelSeparateTrees::update_state(std::unique_ptr<State>& state, size_t
         for (size_t j = 0; j < dim_residual; ++j)
         {
             sum_fits += exp(state->residual_std[j][i]) * (*(x_struct->data_pointers_multinomial[j][tree_ind][i]))[j]; // f_j(x_i) = \prod lambdas
+            if (isnan((*(x_struct->data_pointers_multinomial[j][tree_ind][i]))[j])) {
+                cout << "datapointer is nan. tree = " << tree_ind << ", i = " << i << ", j = " << j << endl;
+                exit(1);
+            }
         }
         // Sample phi
         (*phi)[i] = gammadist(state->gen) / (1.0 * sum_fits);
+        if (isnan((*phi)[i])) {cout << "phi " << i << " is nan"<< endl; exit(1);}
         // cout << "phi " << i << " = " << (*phi)[i] << ", sum_fits = " << sum_fits << endl;
         // calculate logloss
         logloss += -log(exp(state->residual_std[y_i][i]) * (*(x_struct->data_pointers_multinomial[y_i][tree_ind][i]))[y_i] / sum_fits); // logloss =  - log(p_j) 
@@ -700,6 +705,7 @@ void LogitModelSeparateTrees::update_state(std::unique_ptr<State>& state, size_t
     {
         std::gamma_distribution<> d(state->n_y, 1);
         weight = d(state->gen) / (hmult * logloss + heps * (double)state->n_y) + 1;
+        if (isnan(weight)) {cout << "weight is nan" << ", logloss = " << logloss << endl; exit(1);}
     }
     return;
 
