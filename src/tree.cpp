@@ -1087,7 +1087,7 @@ void tree::grow_from_root_separate_tree(std::unique_ptr<State> &state, matrix<si
         }
         cout << "index_in_full = " << index_in_full << endl;
         this->c_index = (size_t) round((double) index_in_full / (double) state->n_y * (double)state->n_cutpoints);
-        cout << "c_index = " << this->candidate_index << endl;
+        cout << "c_index = " << this->c_index << endl;
     }
 
     // Update Cutpoint to be a true seperating point
