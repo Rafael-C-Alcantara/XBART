@@ -273,14 +273,8 @@ void LogitModel::samplePars(std::unique_ptr<State> &state, std::vector<double> &
 {
     for (size_t j = 0; j < dim_theta; j++)
     {
-        if (isnan(suff_stat[j]))
-        {
-            cout <<"unidentified error: suff_stat is nan for class " << j << endl;
-            exit(1);
-        }
         std::gamma_distribution<double> gammadist(tau_a + suff_stat[j] + 1, 1.0); // consider adding 1 sudo obs to prevent 0 theta value
         theta_vector[j] = gammadist(state->gen) / (tau_b + suff_stat[dim_theta + j]);
-        if (isnan(theta_vector[j])) {cout << "theta " << j << " is nan, r = " << suff_stat[j] << ", s = " << suff_stat[dim_theta + j] << endl; exit(1);}
     }
     return;
 }
@@ -301,14 +295,9 @@ void LogitModel::update_state(std::unique_ptr<State>& state, size_t tree_ind, st
         for (size_t j = 0; j < dim_residual; ++j)
         {
             sum_fits += exp(state->residual_std[j][i]) * (*(x_struct->data_pointers[tree_ind][i]))[j]; // f_j(x_i) = \prod lambdas
-            if (isnan((*(x_struct->data_pointers[tree_ind][i]))[j])) {
-                cout << "datapointer is nan. tree = " << tree_ind << ", i = " << i << ", j = " << j << endl;
-                exit(1);
-            }
         }
         // Sample phi
         (*phi)[i] = gammadist(state->gen) / (1.0 * sum_fits);
-        if (isnan((*phi)[i])) {cout << "phi " << i << " is nan"<< endl; exit(1);}
         // calculate logloss
         logloss += -log(exp(state->residual_std[y_i][i]) * (*(x_struct->data_pointers[tree_ind][i]))[y_i] / sum_fits); // logloss =  - log(p_j) 
     }
@@ -316,7 +305,6 @@ void LogitModel::update_state(std::unique_ptr<State>& state, size_t tree_ind, st
     if (update_weight){
         std::gamma_distribution<> d(state->n_y, 1);
         weight = d(state->gen) / (hmult * logloss + heps * (double)state->n_y) + 1; // it's like shift p down by
-        if (isnan(weight)) {cout << "weight is nan" << ", logloss = " << logloss << endl; exit(1);}
     }
 
     return;
@@ -374,7 +362,7 @@ void LogitModel::calculateOtherSideSuffStat(std::vector<double> &parent_suff_sta
         rchild_suff_stat = parent_suff_stat - lchild_suff_stat;
         for (size_t i = 0; i < rchild_suff_stat.size(); i++){
             if(rchild_suff_stat[i] < 0) {
-                cout << "warning: suff stat " << i << ", parent = " << parent_suff_stat[i] << ", left = " << lchild_suff_stat[i] << ", right = " << rchild_suff_stat[i] << endl;
+                // cout << "warning: suff stat " << i << ", parent = " << parent_suff_stat[i] << ", left = " << lchild_suff_stat[i] << ", right = " << rchild_suff_stat[i] << endl;
                 rchild_suff_stat[i] = 0;
             }
         }
@@ -384,7 +372,7 @@ void LogitModel::calculateOtherSideSuffStat(std::vector<double> &parent_suff_sta
         lchild_suff_stat = parent_suff_stat - rchild_suff_stat;
         for (size_t i = 0; i < lchild_suff_stat.size(); i++){
             if(lchild_suff_stat[i] < 0) {
-                cout << "warning: suff stat " << i << ", parent = " << parent_suff_stat[i] << ", left = " << lchild_suff_stat[i] << ", right = " << rchild_suff_stat[i] << endl;
+                // cout << "warning: suff stat " << i << ", parent = " << parent_suff_stat[i] << ", left = " << lchild_suff_stat[i] << ", right = " << rchild_suff_stat[i] << endl;
                 lchild_suff_stat[i] = 0;
             }
         }

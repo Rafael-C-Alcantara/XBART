@@ -889,7 +889,6 @@ std::unique_ptr<X_struct> &x_struct, const size_t &sweeps, const size_t &tree_in
             #pragma omp critical
             state->lambdas[tree_ind].push_back(this->theta_vector);
         }
-        cout << "unusual return "  << endl;
         this->l = 0;
         this->r = 0;
         return;
@@ -1047,10 +1046,6 @@ void tree::grow_from_root_separate_tree(std::unique_ptr<State> &state, matrix<si
             for (size_t i = 0; i < N_Xorder; i++)
             {
                 x_struct->data_pointers_multinomial[j][tree_ind][Xorder_std[0][i]] = &this->theta_vector;
-                if ((*(x_struct->data_pointers_multinomial[j][tree_ind][Xorder_std[0][i]]))[j] == 0) {
-                    cout << "theta_vector = " << this->theta_vector << endl;
-                    exit(1);
-                }
             }
             #pragma omp critical
             state->lambdas_separate[tree_ind][j].push_back(this->theta_vector[j]);
