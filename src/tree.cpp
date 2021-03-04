@@ -1076,7 +1076,7 @@ void tree::grow_from_root_separate_tree(std::unique_ptr<State> &state, matrix<si
 
     if (grow_new_tree)
     {
-        cout < "get c_index" << endl;
+        cout << "get c_index" << endl;
         // If GROW FROM ROOT MODE
         this->v = split_var;
         this->c = *(state->X_std + state->n_y * split_var + Xorder_std[split_var][split_point]);
