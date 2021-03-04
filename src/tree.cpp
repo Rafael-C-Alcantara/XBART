@@ -1085,7 +1085,9 @@ void tree::grow_from_root_separate_tree(std::unique_ptr<State> &state, matrix<si
         while((state->Xorder_std)[split_var][index_in_full]!=Xorder_std[split_var][split_point]){
             index_in_full++;
         }
+        cout << "index_in_full = " << index_in_full << endl;
         this->c_index = (size_t) round((double) index_in_full / (double) state->n_y * (double)state->n_cutpoints);
+        cout << "c_index = " << this->candidate_index << endl;
     }
 
     // Update Cutpoint to be a true seperating point
@@ -1094,6 +1096,7 @@ void tree::grow_from_root_separate_tree(std::unique_ptr<State> &state, matrix<si
     {
         split_point = split_point + 1;
     }
+    cout << "split_point = " << split_point << endl;
 
     // If our current split is same as parent, exit
     if ((this->p) && (this->v == (this->p)->v) && (this->c == (this->p)->c))
