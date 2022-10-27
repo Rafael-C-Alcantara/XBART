@@ -459,9 +459,10 @@ double opt_lambda(size_t n, double sy, double c, double d, std::mt19937& gen)
     ret = _pi * ret1 + (1 - _pi) * ret2;
 
     if (isnan(ret) | isinf(ret) | (ret == 0)) {
-        cout << "Leaf parameter sampling failed, value = " << ret << endl;
+        cout << "Leaf parameter sampling failed, p1 = " << ret1 << " p2 = " << ret2 << " n = " << n << " sy = " << sy << endl;
         abort();
     }
+    // cout << "p1 = " << ret1 << " p2 = " << ret2 << " n = " << n << " sy = " << sy << endl;
     return ret;
 }
 
