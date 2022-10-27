@@ -328,9 +328,12 @@ void LogitModel::samplePars(State &state, std::vector<double> &suff_stat, std::v
         // }
         n = round(suff_stat[j]); // integer
         sy = suff_stat[dim_theta + j];
-        // cout << "j = " << j << " n = " << n << " sy = " << sy << endl;
-        theta_vector[j] = drawlambdafromR(n, sy, c, d, state.gen); //(n, sy, c, d, gen);
-        // cout << "theta = " << theta_vector[j] << endl;
+        // // cout << "j = " << j << " n = " << n << " sy = " << sy << endl;
+        // theta_vector[j] = drawlambdafromR(n, sy, c, d, state.gen); //(n, sy, c, d, gen);
+        // // cout << "theta = " << theta_vector[j] << endl;
+
+        // Optimize leaf param
+        theta_vector[j] = opt_lambda(n, sy, c, d, state.gen);
     }
     return;
 }

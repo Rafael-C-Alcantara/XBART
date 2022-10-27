@@ -173,6 +173,8 @@ double drawlambdafromR(size_t n, double sy, double c, double d, std::mt19937& ge
 
 double drawnodelambda(size_t n, double sy, double c, double d, std::mt19937& gen);
 
+double opt_lambda(size_t n, double sy, double c, double d, std::mt19937& gen);
+
 double gignorm(double eta, double chi, double psi);
 
 double loggignorm(double eta, double chi, double psi) ;
