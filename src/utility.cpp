@@ -434,29 +434,30 @@ double opt_lambda(size_t n, double sy, double c, double d, std::mt19937& gen)
     // double _pi =  z1 / (z1+z2) = 1 / (1 + z2 / z1) = 1 / (1 + exp(log(z2 / z1))) = 1 / (1 + exp(log(z2) - log(z1)))
     double _pi = 1 / (1 + exp(logz2 - logz1));
     double eta, chi, psi;
-    double ret;
+    double ret1, ret2, ret;
     std::uniform_real_distribution<double> udist(0, 1);
 
-    if (udist(gen) < _pi){ 
-        // optimized based on gig(-c+r, 2*d, 2*s)
-        eta = -c + n; 
-        chi = 2*d;
-        psi = 2*sy;
-        
-        if ((chi > 0) & (psi > 0)) 
-        {
-            double sq = sqrt(chi * psi);
-            // cout << "eta " << eta << " sqrt " << sq << endl;
-            double k1 = eta > 0 ? gsl_sf_bessel_lnKnu(eta + 1, sqrt(chi*psi)) : log(boost::math::cyl_bessel_k(eta + 1, sq));
-            double k2 = eta > 0 ? gsl_sf_bessel_lnKnu(eta, sqrt(chi*psi)) : log(boost::math::cyl_bessel_k(eta, sq));
-            ret = exp(log(chi) / 2 - log(psi) / 2 + k1 - k2);
-        } else {
-            cout << "Unqualified GIG distribution " << " chi " << chi << " psi " << psi << endl;
-        }
-    } else { 
-        // draw from gig(c+r, 0, 2*(d+s)) or equivalently gamma(c+r, d+s)
-        ret = (c + n) / (d + sy);
+    // optimized based on gig(-c+r, 2*d, 2*s)
+    eta = -c + n; 
+    chi = 2*d;
+    psi = 2*sy;
+    
+    if ((chi > 0) & (psi > 0)) 
+    {
+        double sq = sqrt(chi * psi);
+        // cout << "eta " << eta << " sqrt " << sq << endl;
+        double k1 = eta > 0 ? gsl_sf_bessel_lnKnu(eta + 1, sqrt(chi*psi)) : log(boost::math::cyl_bessel_k(eta + 1, sq));
+        double k2 = eta > 0 ? gsl_sf_bessel_lnKnu(eta, sqrt(chi*psi)) : log(boost::math::cyl_bessel_k(eta, sq));
+        ret1 = exp(log(chi) / 2 - log(psi) / 2 + k1 - k2);
+    } else {
+        cout << "Unqualified GIG distribution " << " chi " << chi << " psi " << psi << endl;
     }
+
+    // optimizd from gig(c+r, 0, 2*(d+s)) or equivalently gamma(c+r, d+s)
+    ret2 = (c + n) / (d + sy);
+
+    ret = _pi * ret1 + (1 - _pi) * ret2;
+
     if (isnan(ret) | isinf(ret) | (ret == 0)) {
         cout << "Leaf parameter sampling failed, value = " << ret << endl;
         abort();
