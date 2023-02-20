@@ -1994,27 +1994,44 @@ void split_xorder_std_continuous_simplified(gp_struct &x_struct, matrix<size_t> 
 
     for (size_t i = 0; i < p_continuous; i++) // loop over variables
     {
-        size_t left_ix = 0;
-        size_t right_ix = 0;
-
-        std::vector<size_t> &xo = Xorder_std[i];
-        std::vector<size_t> &xo_left = Xorder_left_std[i];
-        std::vector<size_t> &xo_right = Xorder_right_std[i];
-
-        for (size_t j = 0; j < N_Xorder; j++)
+        auto split_i = [&, i]()
         {
-            if (*(split_var_x_pointer + xo[j]) <= cutvalue)
+            size_t left_ix = 0;
+            size_t right_ix = 0;
+
+            std::vector<size_t> &xo = Xorder_std[i];
+            std::vector<size_t> &xo_left = Xorder_left_std[i];
+            std::vector<size_t> &xo_right = Xorder_right_std[i];
+
+            for (size_t j = 0; j < N_Xorder; j++)
             {
-                xo_left[left_ix] = xo[j];
-                left_ix = left_ix + 1;
+                if (*(split_var_x_pointer + xo[j]) <= cutvalue)
+                {
+                    xo_left[left_ix] = xo[j];
+                    left_ix = left_ix + 1;
+                }
+                else
+                {
+                    xo_right[right_ix] = xo[j];
+                    right_ix = right_ix + 1;
+                }
             }
-            else
-            {
-                xo_right[right_ix] = xo[j];
-                right_ix = right_ix + 1;
-            }
+        };
+
+        if (thread_pool.is_active())
+        {
+            thread_pool.add_task(split_i);
         }
+        else
+        {
+            split_i();
+        }
+        
     }
+
+    if (thread_pool.is_active())
+        thread_pool.wait();
+
     return;
 }
 
@@ -2137,6 +2154,10 @@ void tree::gp_predict_from_root(matrix<size_t> &Xorder_std, gp_struct &x_struct,
         // FOR NOW: just those having out-of-range points
         std::vector<size_t> test_ind;
         std::vector<bool> active_var_out_range(p_continuous, false);
+
+        // force neglect the last active variable (x) in rdd.
+        active_var[active_var.size() - 1] = 0;
+        
         for (size_t i = 0; i < Ntest; i++)
         {
             for (size_t j = 0; j < p_continuous; j++)
@@ -2158,6 +2179,10 @@ void tree::gp_predict_from_root(matrix<size_t> &Xorder_std, gp_struct &x_struct,
                 }
             }
         }
+        // for (size_t j = 0; j < p_continuous; j++){
+        //     if (active_var[j])
+        //         cout << "var " << j << " range " << local_X_range[j] << endl;
+        // }
 
         // construct covariance matrix
         // TODO: consider categorical active variables
@@ -2186,6 +2211,8 @@ void tree::gp_predict_from_root(matrix<size_t> &Xorder_std, gp_struct &x_struct,
             train_ind.resize(100);
             std::sample(Xorder_std[0].begin(), Xorder_std[0].end(), train_ind.begin(), 100, x_struct.gen);
         }
+
+        // cout << "N = " << N << " Ntest = "<< Ntest << endl;
 
         mat X(N + Ntest, p_active);
         std::vector<double> x_range(p_active);
@@ -2263,7 +2290,6 @@ void tree::gp_predict_from_root(matrix<size_t> &Xorder_std, gp_struct &x_struct,
         vec S;
         mat V;
         svd(U, S, V, Sig);
-
         std::normal_distribution<double> normal_samp(0.0, 1.0);
         mat samp(Ntest, 1);
         for (size_t i = 0; i < Ntest; i++)

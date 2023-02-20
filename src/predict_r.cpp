@@ -261,6 +261,8 @@ Rcpp::List gp_predict(mat y, mat X, mat Xtest, Rcpp::XPtr<std::vector<std::vecto
     // should be able to run in parallel
     COUT << "predict with gaussian process" << endl;
 
+    thread_pool.start(0);
+
     // Size of data
     size_t N = X.n_rows;
     size_t p = X.n_cols;
@@ -358,6 +360,8 @@ Rcpp::List gp_predict(mat y, mat X, mat Xtest, Rcpp::XPtr<std::vector<std::vecto
 
     Rcpp::NumericMatrix yhats_test(N_test, num_sweeps);
     Matrix_to_NumericMatrix(yhats_test_xinfo, yhats_test);
+
+    thread_pool.stop();
 
     return Rcpp::List::create(Rcpp::Named("yhats_test") = yhats_test);
 }
