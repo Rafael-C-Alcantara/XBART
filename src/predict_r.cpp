@@ -261,7 +261,7 @@ Rcpp::List gp_predict(mat y, mat X, mat Xtest, Rcpp::XPtr<std::vector<std::vecto
     // should be able to run in parallel
     COUT << "predict with gaussian process" << endl;
 
-    thread_pool.start(0);
+    thread_pool.start(1);
 
     // Size of data
     size_t N = X.n_rows;
@@ -328,9 +328,6 @@ Rcpp::List gp_predict(mat y, mat X, mat Xtest, Rcpp::XPtr<std::vector<std::vecto
         std::fill(yhats_test_xinfo[i].begin(), yhats_test_xinfo[i].end(), 0.0);
     }
 
-    std::vector<bool> active_var(p);
-    std::fill(active_var.begin(), active_var.end(), false);
-
     // get residuals
     matrix<std::vector<double>> residuals;
     ini_matrix(residuals, num_trees, num_sweeps);
@@ -350,13 +347,43 @@ Rcpp::List gp_predict(mat y, mat X, mat Xtest, Rcpp::XPtr<std::vector<std::vecto
     // mcmc loop
     for (size_t sweeps = 0; sweeps < num_sweeps; sweeps++)
     {
+        matrix<double> mu_xinfo;
+        ini_matrix(mu_xinfo, N_test, num_trees);
+
         for (size_t tree_ind = 0; tree_ind < num_trees; tree_ind++)
         {
-            (*trees)[sweeps][tree_ind].gp_predict_from_root(Xorder_std, x_struct, x_struct.X_counts, x_struct.X_num_unique,
+            // auto split_i = [&, tree_ind]()
+            // {
+                // cout << "sweeps " << sweeps << " tree_ind " << tree_ind << endl;
+                std::vector<bool> active_var(p);
+                std::fill(active_var.begin(), active_var.end(), false);
+
+                std::vector<double> &mu_vec = mu_xinfo[tree_ind];
+
+                (*trees)[sweeps][tree_ind].gp_predict_from_root(Xorder_std, x_struct, x_struct.X_counts, x_struct.X_num_unique,
                                                             Xtestorder_std, xtest_struct, xtest_struct.X_counts, xtest_struct.X_num_unique,
-                                                            yhats_test_xinfo, active_var, p_categorical, sweeps, tree_ind, theta, tau);
+                                                            mu_vec, active_var, p_categorical, sweeps, tree_ind, theta, tau);
+            // };
+
+            // if (thread_pool.is_active())
+            // {
+            //     thread_pool.add_task(split_i);
+            // }
+            // else
+            // {
+            //     split_i();
+            // }
+        }
+
+        for (size_t tree_ind = 0; tree_ind  < num_trees; tree_ind++){
+            for (size_t i = 0; i < N_test;i++){
+                yhats_test_xinfo[sweeps][i] += mu_xinfo[tree_ind][i];
+            }
         }
     }
+
+    // if (thread_pool.is_active())
+    //     thread_pool.wait();
 
     Rcpp::NumericMatrix yhats_test(N_test, num_sweeps);
     Matrix_to_NumericMatrix(yhats_test_xinfo, yhats_test);

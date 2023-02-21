@@ -129,9 +129,10 @@ yt = ft + rnorm(nt, 0, sigma)
 n_trees = 20
 tau = var(y)/n_trees
 fit <- XBART(y=matrix(y),  X=x, Xtest=xt, num_trees=n_trees, Nmin = 20, num_sweeps=100, burnin = 20, tau = tau, sampling_tau = TRUE)
-pred <- predict(fit, xt)
-gp_pred <- predict_gp(fit, as.matrix(y),X =  x, Xtest = xt, theta = 0.1, tau = var(y) / (n_trees), p_categorical = 0)
-
+pred <- predict.XBART(fit, xt)
+tm <- proc.time()
+gp_pred <- predict_gp(fit, as.matrix(y), X = x, Xtest = xt, theta = 0.1, tau = var(y) / (n_trees), p_categorical = 0)
+tm <- proc.time() - tm
 
 gp_yhat <- t(apply(gp_pred, 1, function(x) rnorm(length(x), x, fit$sigma[10,])))
 
@@ -139,6 +140,7 @@ gp.upper <- apply(gp_yhat, 1, quantile, 0.975, na.rm = TRUE)
 gp.lower <- apply(gp_yhat, 1, quantile, 0.025, na.rm = TRUE)
 coverage.gp <- (yt <= gp.upper & yt >= gp.lower)
 
+print(paste("gp time = ", round(tm[3], 3)))
 print(paste("xbart rmse = ", round(sqrt(mean((yt - rowMeans(gp_pred))^2)),3) ))
 print(paste("gp rmse = ", round( sqrt(mean((yt - rowMeans(gp_yhat))^2, na.rm=TRUE)), 3) ) )
 print(paste("gp coverage = ", round( mean(coverage.gp), 3) ))
