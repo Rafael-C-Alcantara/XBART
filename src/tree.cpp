@@ -1994,50 +1994,48 @@ void split_xorder_std_continuous_simplified(gp_struct &x_struct, matrix<size_t> 
 
     for (size_t i = 0; i < p_continuous; i++) // loop over variables
     {
-        // auto split_i = [&, i]()
-        // {
-        size_t left_ix = 0;
-        size_t right_ix = 0;
-
-        std::vector<size_t> &xo = Xorder_std[i];
-        std::vector<size_t> &xo_left = Xorder_left_std[i];
-        std::vector<size_t> &xo_right = Xorder_right_std[i];
-
-        for (size_t j = 0; j < N_Xorder; j++)
+        auto split_i = [&, i]()
         {
-            if (*(split_var_x_pointer + xo[j]) <= cutvalue)
-            {
-                xo_left[left_ix] = xo[j];
-                left_ix = left_ix + 1;
-            }
-            else
-            {
-                xo_right[right_ix] = xo[j];
-                right_ix = right_ix + 1;
-            }
-        }
-        // };
+            size_t left_ix = 0;
+            size_t right_ix = 0;
 
-        // if (thread_pool.is_active())
-        // {
-        //     thread_pool.add_task(split_i);
-        // }
-        // else
-        // {
-        //     split_i();
-        // }
+            std::vector<size_t> &xo = Xorder_std[i];
+            std::vector<size_t> &xo_left = Xorder_left_std[i];
+            std::vector<size_t> &xo_right = Xorder_right_std[i];
+
+            for (size_t j = 0; j < N_Xorder; j++)
+            {
+                if (*(split_var_x_pointer + xo[j]) <= cutvalue)
+                {
+                    xo_left[left_ix] = xo[j];
+                    left_ix = left_ix + 1;
+                }
+                else
+                {
+                    xo_right[right_ix] = xo[j];
+                    right_ix = right_ix + 1;
+                }
+            }
+        };
+
+        if (thread_pool.is_active())
+        {
+            thread_pool.add_task(split_i);
+        }
+        else
+        {
+            split_i();
+        }
         
     }
 
-    // if (thread_pool.is_active())
-    //     thread_pool.wait();
+    if (thread_pool.is_active())
+        thread_pool.wait();
 
     return;
 }
 
-void tree::gp_predict_from_root(matrix<size_t> &Xorder_std, gp_struct &x_struct, std::vector<size_t> &X_counts, std::vector<size_t> &X_num_unique, matrix<size_t> &Xtestorder_std,
-                                gp_struct &xtest_struct, std::vector<size_t> &Xtest_counts, std::vector<size_t> &Xtest_num_unique, std::vector<double> mu_vec,
-                                std::vector<bool> active_var, const size_t &p_categorical, const size_t &sweeps, const size_t &tree_ind, const double &theta, const double &tau)
+void tree::gp_predict_from_root(matrix<size_t> &Xorder_std, gp_struct &x_struct, std::vector<size_t> &X_counts, std::vector<size_t> &X_num_unique, matrix<size_t> &Xtestorder_std, gp_struct &xtest_struct, std::vector<size_t> &Xtest_counts, std::vector<size_t> &Xtest_num_unique, matrix<double> &yhats_test_xinfo, std::vector<bool> active_var, const size_t &p_categorical, const size_t &sweeps, const size_t &tree_ind, const double &theta, const double &tau)
 {
     // gaussian process prediction from root
     size_t N = Xorder_std[0].size();
@@ -2101,14 +2099,14 @@ void tree::gp_predict_from_root(matrix<size_t> &Xorder_std, gp_struct &x_struct,
             {
                 // all test data goes to the right node
                 this->r->gp_predict_from_root(Xorder_right_std, x_struct, X_counts_right, X_num_unique_right,
-                                              Xtestorder_std, xtest_struct, Xtest_counts, Xtest_num_unique, mu_vec, active_var_right, p_categorical, sweeps, tree_ind, theta, tau);
+                                              Xtestorder_std, xtest_struct, Xtest_counts, Xtest_num_unique, yhats_test_xinfo, active_var_right, p_categorical, sweeps, tree_ind, theta, tau);
                 return;
             }
             if (c >= *(xtest_struct.X_std + xtest_struct.n_y * v + Xtestorder_std[v][Ntest - 1]))
             {
                 // all test data goes to the left node
                 this->l->gp_predict_from_root(Xorder_left_std, x_struct, X_counts_left, X_num_unique_left,
-                                              Xtestorder_std, xtest_struct, Xtest_counts, Xtest_num_unique, mu_vec, active_var_left, p_categorical, sweeps, tree_ind, theta, tau);
+                                              Xtestorder_std, xtest_struct, Xtest_counts, Xtest_num_unique, yhats_test_xinfo, active_var_left, p_categorical, sweeps, tree_ind, theta, tau);
                 return;
             }
 
@@ -2128,10 +2126,10 @@ void tree::gp_predict_from_root(matrix<size_t> &Xorder_std, gp_struct &x_struct,
         }
 
         this->l->gp_predict_from_root(Xorder_left_std, x_struct, X_counts_left, X_num_unique_left,
-                                      Xtestorder_left_std, xtest_struct, Xtest_counts_left, Xtest_num_unique_left, mu_vec, active_var_left, p_categorical, sweeps, tree_ind, theta, tau);
+                                      Xtestorder_left_std, xtest_struct, Xtest_counts_left, Xtest_num_unique_left, yhats_test_xinfo, active_var_left, p_categorical, sweeps, tree_ind, theta, tau);
 
         this->r->gp_predict_from_root(Xorder_right_std, x_struct, X_counts_right, X_num_unique_right,
-                                      Xtestorder_right_std, xtest_struct, Xtest_counts_right, Xtest_num_unique_right, mu_vec, active_var_right, p_categorical, sweeps, tree_ind, theta, tau);
+                                      Xtestorder_right_std, xtest_struct, Xtest_counts_right, Xtest_num_unique_right, yhats_test_xinfo, active_var_right, p_categorical, sweeps, tree_ind, theta, tau);
     }
     else
     {
@@ -2143,8 +2141,7 @@ void tree::gp_predict_from_root(matrix<size_t> &Xorder_std, gp_struct &x_struct,
         // assign mu
         for (size_t i = 0; i < Ntest; i++)
         {
-            // yhats_test_xinfo[sweeps][Xtestorder_std[0][i]] += this->theta_vector[0];
-            mu_vec[Xtestorder_std[0][i]] = this->theta_vector[0];
+            yhats_test_xinfo[sweeps][Xtestorder_std[0][i]] += this->theta_vector[0];
         }
 
         // get local range
@@ -2159,7 +2156,7 @@ void tree::gp_predict_from_root(matrix<size_t> &Xorder_std, gp_struct &x_struct,
         std::vector<bool> active_var_out_range(p_continuous, false);
 
         // force neglect the last active variable (x) in rdd.
-        active_var[active_var.size() - 1] = 0;
+        // active_var[active_var.size() - 1] = 0;
         
         for (size_t i = 0; i < Ntest; i++)
         {
@@ -2299,8 +2296,7 @@ void tree::gp_predict_from_root(matrix<size_t> &Xorder_std, gp_struct &x_struct,
             samp(i, 0) = normal_samp(x_struct.gen);
         mat draws = mu + U * diagmat(sqrt(S)) * samp;
         for (size_t i = 0; i < Ntest; i++)
-            // yhats_test_xinfo[sweeps][test_ind[i]] += draws(i, 0);
-            mu_vec[test_ind[i]] = draws(i, 0);
+            yhats_test_xinfo[sweeps][test_ind[i]] += draws(i, 0);
     }
     return;
 }
