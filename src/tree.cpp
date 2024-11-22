@@ -710,12 +710,15 @@ void tree::grow_from_root(State &state, matrix<size_t> &Xorder_std, std::vector<
             this->l->suff_stat[7] = this->c;
             this->r->suff_stat[6] = this->c;
             this->r->suff_stat[7] = this->suff_stat[7];
-            this->
+            this->l->suff_stat[8] = 1;
+            this->r->suff_stat[8] = 1;
         } else {
             this->l->suff_stat[6] = this->suff_stat[6];
             this->l->suff_stat[7] = this->suff_stat[7];
             this->r->suff_stat[6] = this->suff_stat[6];
             this->r->suff_stat[7] = this->suff_stat[7];
+            this->l->suff_stat[8] = 0;
+            this->r->suff_stat[8] = 0;
         }
     } 
     // cout << "split_var " << this->v << " cutpoint " << this->c << endl;
