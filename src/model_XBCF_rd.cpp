@@ -135,6 +135,12 @@ double XBCFrdModel::likelihood(std::vector<double> &temp_suff_stat, std::vector<
     }
     else
     {
+        if (temp_suff_stat[8] == 0){
+            if ( (suff_stat_all[7] >= cutoff - Owidth) & (suff_stat_all[6] <= cutoff + Owidth) &  ((double (suff_stat_all[4] + suff_stat_all[5]) / (suff_stat_all[2] + suff_stat_all[3])) < Opct) ){
+            // cout << "force split " << " Ol " << suff_stat_all[4] << " Or " << suff_stat_all[5] << " N " << suff_stat_all[2] + suff_stat_all[3] << endl;
+            return -INFINITY;
+        }
+        }
         // set likelihood to 0 (-inf in log scale) if producing small leaves within bandwidth
         double Oll = temp_suff_stat[4];
         double Olr = temp_suff_stat[5];
