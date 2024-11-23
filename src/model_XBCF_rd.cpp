@@ -104,7 +104,7 @@ double XBCFrdModel::likelihood(std::vector<double> &temp_suff_stat, std::vector<
     double denominator0;
     double s_psi_squared0;
     double p;
-    double p0;
+    double p0 = 0.0;
 
     if (state.treatment_flag)
     {
@@ -194,21 +194,7 @@ double XBCFrdModel::likelihood(std::vector<double> &temp_suff_stat, std::vector<
         }
     }
     p = 0.5 * log(1 / denominator) + 0.5 * pow(s_psi_squared, 2) * tau_use / denominator;
-    if (no_split)
-    {
-      return p;
-    }
-    else
-    {
-      if (temp_suff_stat[8] == 1)
-      {
-        return p0 + p;
-      }
-      else
-      {
-        return p;
-      }
-    }
+    return p0 + p;
 }
 
 
