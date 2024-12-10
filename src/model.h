@@ -569,7 +569,7 @@ class XBCFrdModel : public XBCFDiscreteModel
 {
 public:
 
-    size_t dim_suffstat = 8;
+    size_t dim_suffstat = 9;
 
     double cutoff;
     double Opct;

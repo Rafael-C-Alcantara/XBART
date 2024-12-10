@@ -101,6 +101,10 @@ double XBCFrdModel::likelihood(std::vector<double> &temp_suff_stat, std::vector<
     double s1 = 0;
     double denominator;   // the denominator (1 + tau * precision_squared) is the same for both terms
     double s_psi_squared; // (residual * precision_squared)^2
+    double denominator0;
+    double s_psi_squared0;
+    double p;
+    double p0 = 0.0;
 
     if (state.treatment_flag)
     {
@@ -135,6 +139,14 @@ double XBCFrdModel::likelihood(std::vector<double> &temp_suff_stat, std::vector<
     }
     else
     {
+        if (temp_suff_stat[8] == 1){
+            if ( (suff_stat_all[7] >= cutoff - Owidth) & (suff_stat_all[6] <= cutoff + Owidth) &  ((double (suff_stat_all[4] + suff_stat_all[5]) / (suff_stat_all[2] + suff_stat_all[3])) < Opct) ){
+            // cout << "force split " << " Ol " << suff_stat_all[4] << " Or " << suff_stat_all[5] << " N " << suff_stat_all[2] + suff_stat_all[3] << endl;
+            denominator0 = 1 + (suff_stat_all[2] / pow(s0, 2) + suff_stat_all[3] / pow(s1, 2)) * tau_use;
+            s_psi_squared0 = suff_stat_all[0] / pow(s0, 2) + suff_stat_all[1] / pow(s1, 2);
+            p0 = 0.5 * log(1 / denominator0) + 0.5 * pow(s_psi_squared0, 2) * tau_use / denominator0;
+        }
+        }
         // set likelihood to 0 (-inf in log scale) if producing small leaves within bandwidth
         double Oll = temp_suff_stat[4];
         double Olr = temp_suff_stat[5];
@@ -181,7 +193,8 @@ double XBCFrdModel::likelihood(std::vector<double> &temp_suff_stat, std::vector<
             s_psi_squared = (suff_stat_all[0] - temp_suff_stat[0]) / pow(s0, 2) + (suff_stat_all[1] - temp_suff_stat[1]) / pow(s1, 2);
         }
     }
-    return 0.5 * log(1 / denominator) + 0.5 * pow(s_psi_squared, 2) * tau_use / denominator;
+    p = 0.5 * log(1 / denominator) + 0.5 * pow(s_psi_squared, 2) * tau_use / denominator;
+    return p0 + p;
 }
 
 
