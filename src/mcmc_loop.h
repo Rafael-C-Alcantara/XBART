@@ -60,7 +60,9 @@ void mcmc_loop_xbcf_rd( matrix<size_t> &Xorder_std_con,
                         X_struct &x_struct_con,
                         X_struct &x_struct_mod,
                         matrix<std::vector<double>> &con_residuals,
-                        matrix<std::vector<double>> &mod_residuals
+                        matrix<std::vector<double>> &mod_residuals,
+                        std::vector<size_t> &count1_vec,
+                        std::vector<size_t> &count2_vec
                         );
 
 // XBART with heteroskedastic variance

@@ -613,7 +613,9 @@ void mcmc_loop_xbcf_rd( matrix<size_t> &Xorder_std_con,
                         X_struct &x_struct_con,
                         X_struct &x_struct_mod,
                         matrix<std::vector<double>> &con_residuals,
-                        matrix<std::vector<double>> &mod_residuals
+                        matrix<std::vector<double>> &mod_residuals,
+                        std::vector<size_t> &count1_vec,
+                        std::vector<size_t> &count2_vec
                         )
 {
     model->ini_tau_mu_fit(state);
@@ -668,7 +670,7 @@ void mcmc_loop_xbcf_rd( matrix<size_t> &Xorder_std_con,
             model->initialize_root_suffstat(state, trees_con[sweeps][tree_ind].suff_stat);
 
             trees_con[sweeps][tree_ind].grow_from_root(state, Xorder_std_con, x_struct_con.X_counts, x_struct_con.X_num_unique, model, x_struct_con, sweeps, tree_ind);
-
+            
             // store residuals:
             for (size_t data_ind = 0; data_ind < (*state.residual_std)[0].size(); data_ind++)
             {
@@ -779,6 +781,9 @@ void mcmc_loop_xbcf_rd( matrix<size_t> &Xorder_std_con,
                 }
             }
         }
+        // Store counts of failed constraints for a given iteration
+        count1_vec[sweeps] = model->count_fail_1;
+        count2_vec[sweeps] = model->count_fail_2;
 
         if (model->sampling_tau)
         {
@@ -789,6 +794,8 @@ void mcmc_loop_xbcf_rd( matrix<size_t> &Xorder_std_con,
         b_xinfo[0][sweeps] = state.b_vec[0];
         b_xinfo[1][sweeps] = state.b_vec[1];
         a_xinfo[0][sweeps] = state.a;
+        model->count_fail_1 = 0;
+        model->count_fail_2 = 0;
     }
     // cout << "residual = " << mod_valid_residuals[2][2][4] << endl;
     return;

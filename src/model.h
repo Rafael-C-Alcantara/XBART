@@ -575,8 +575,10 @@ public:
     double Opct;
     double Owidth;
     size_t Omin;
-    mutable size_t count_fail_1 = 0;
-    mutable size_t count_fail_2 = 0;
+    // Integers to store the number of times a split violates our constraints
+    /// These get updated in the RDD likelihood function
+    mutable size_t count_fail_1;
+    mutable size_t count_fail_2;
     
     XBCFrdModel(double kap, double s, double tau_con, double tau_mod, double alpha_con, double beta_con, double alpha_mod, double beta_mod, bool sampling_tau, double tau_con_kap, double tau_con_s, double tau_mod_kap, double tau_mod_s, double cutoff, double Owidth, size_t Omin, double Opct) : 
     XBCFDiscreteModel(kap, s, tau_con, tau_mod, alpha_con, beta_con, alpha_mod, beta_mod, sampling_tau, tau_con_kap, tau_con_s, tau_mod_kap, tau_mod_s) 
@@ -585,6 +587,8 @@ public:
         this->Opct = Opct;
         this->Owidth = Owidth;
         this->Omin = Omin;
+        count_fail_1 = 0;
+        count_fail_2 = 0;
     }
 
     XBCFrdModel() : XBCFDiscreteModel() {}

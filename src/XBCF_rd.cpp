@@ -31,8 +31,8 @@ Rcpp::List XBCF_rd_cpp(arma::mat y, arma::mat Z, arma::mat X_con, arma::mat X_mo
     size_t p_con = X_con.n_cols;
     size_t p_mod = X_mod.n_cols;
 
-    COUT << "size of X_con " << X_con.n_rows << " " << X_con.n_cols << endl;
-    COUT << "size of X_mod " << X_mod.n_rows << " " << X_mod.n_cols << endl;
+    //COUT << "size of X_con " << X_con.n_rows << " " << X_con.n_cols << endl;
+    //COUT << "size of X_mod " << X_mod.n_rows << " " << X_mod.n_cols << endl;
 
     // number of basis functions (1 in the case of the OG bcf)
     size_t p_z = Z.n_cols;
@@ -174,10 +174,14 @@ Rcpp::List XBCF_rd_cpp(arma::mat y, arma::mat Z, arma::mat X_con, arma::mat X_mo
     X_struct x_struct_mod(Xpointer_mod, &y_std, N, Xorder_std_mod, p_categorical_mod, p_continuous_mod, &initial_theta_mod, num_trees_mod);
 
     ////////////////////////////////////////////////////////////////
+    // Vectors to store counts of constraint fails
+    /// 1: force split constraint
+    /// 2: points inside window constraint
+    std::vector<size_t> count1_vec(num_sweeps,0);
+    std::vector<size_t> count2_vec(num_sweeps,0);
+    /// MCMC loop
     mcmc_loop_xbcf_rd(Xorder_std_con, Xorder_std_mod, verbose, sigma0_draw_xinfo, sigma1_draw_xinfo, a_xinfo, b_xinfo, tau_con_xinfo, tau_mod_xinfo, trees_con, trees_mod, no_split_penalty, state, model, x_struct_con, x_struct_mod,
-                    con_residuals, mod_residuals);
-    std::cout << "Number of times constraint 1 was rejected: " << model->count_fail_1 << "\n";
-    std::cout << "Number of times constraint 2 was rejected: " << model->count_fail_2 << "\n";
+                    con_residuals, mod_residuals, count1_vec, count2_vec);
 
     // R Objects to Return
     Rcpp::NumericMatrix sigma0_draw(num_trees_con + num_trees_mod, num_sweeps); // save predictions of each tree
@@ -199,9 +203,16 @@ Rcpp::List XBCF_rd_cpp(arma::mat y, arma::mat Z, arma::mat X_con, arma::mat X_mo
     Rcpp::NumericMatrix con_residuals_rcpp(num_trees_con * num_sweeps, N);
 
     Rcpp::NumericMatrix mod_residuals_rcpp(num_trees_mod * num_sweeps, N);
+    
+    Rcpp::NumericVector count1_rcpp(num_sweeps, 0);
+    
+    Rcpp::NumericVector count2_rcpp(num_sweeps, 0);
 
     for (size_t i = 0; i < num_sweeps; i++)
     {
+      // Convert constraint fail count vectors to Rcpp
+      count1_rcpp(i) = count1_vec[i];
+      count2_rcpp(i) = count2_vec[i];
         for (size_t k = 0; k < N; k++){
             for (size_t j = 0; j < num_trees_con; j++)
             {
@@ -263,6 +274,8 @@ Rcpp::List XBCF_rd_cpp(arma::mat y, arma::mat Z, arma::mat X_con, arma::mat X_mo
         Rcpp::Named("tree_string_mod") = output_tree_mod,
         Rcpp::Named("tree_string_con") = output_tree_con,
         Rcpp::Named("residuals_con") = con_residuals_rcpp,
-        Rcpp::Named("residuals_mod") = mod_residuals_rcpp
+        Rcpp::Named("residuals_mod") = mod_residuals_rcpp,
+        Rcpp::Named("count_fail_1") = count1_rcpp,
+        Rcpp::Named("count_fail_2") = count2_rcpp
         );
 }
