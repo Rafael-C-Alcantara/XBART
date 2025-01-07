@@ -20,10 +20,10 @@ Rcpp::List XBCF_rd_cpp(arma::mat y, arma::mat Z, arma::mat X_con, arma::mat X_mo
         thread_pool.start(nthread);
         COUT << "Running in parallel with " << nthread << " threads." << endl;
     }
-    else
-    {
-        COUT << "Running with single thread." << endl;
-    }
+//    else
+//    {
+//        COUT << "Running with single thread." << endl;
+//    }
 
     size_t N = X_con.n_rows;
 
