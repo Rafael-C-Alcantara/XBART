@@ -132,6 +132,7 @@ double XBCFrdModel::likelihood(std::vector<double> &temp_suff_stat, std::vector<
         // check force split condition
         if ( (suff_stat_all[7] >= cutoff - Owidth) & (suff_stat_all[6] <= cutoff + Owidth) &  ((double (suff_stat_all[4] + suff_stat_all[5]) / (suff_stat_all[2] + suff_stat_all[3])) < Opct) ){
             // cout << "force split " << " Ol " << suff_stat_all[4] << " Or " << suff_stat_all[5] << " N " << suff_stat_all[2] + suff_stat_all[3] << endl;
+            count_fail_1 += 1;
             return -INFINITY;
         }
         denominator = 1 + (suff_stat_all[2] / pow(s0, 2) + suff_stat_all[3] / pow(s1, 2)) * tau_use;
@@ -145,6 +146,7 @@ double XBCFrdModel::likelihood(std::vector<double> &temp_suff_stat, std::vector<
             denominator0 = 1 + (suff_stat_all[2] / pow(s0, 2) + suff_stat_all[3] / pow(s1, 2)) * tau_use;
             s_psi_squared0 = suff_stat_all[0] / pow(s0, 2) + suff_stat_all[1] / pow(s1, 2);
             p0 = 0.5 * log(1 / denominator0) + 0.5 * pow(s_psi_squared0, 2) * tau_use / denominator0;
+            count_fail_1 += 1;
         }
         }
         // set likelihood to 0 (-inf in log scale) if producing small leaves within bandwidth
@@ -176,6 +178,7 @@ double XBCFrdModel::likelihood(std::vector<double> &temp_suff_stat, std::vector<
         {
             if ((lmax >= cutoff - Owidth) & (lmin <= cutoff + Owidth)) {
                 if ((Oll < Omin) || (Olr < Omin)){
+                  count_fail_2 += 1;
                     return -INFINITY;
                 }
             }
@@ -186,6 +189,7 @@ double XBCFrdModel::likelihood(std::vector<double> &temp_suff_stat, std::vector<
         {
             if ((rmax >= cutoff - Owidth) & (rmin <= cutoff + Owidth)){
                 if ((Orl < Omin) || (Orr < Omin)){
+                  count_fail_2 += 1;
                     return -INFINITY;
                 }
             }

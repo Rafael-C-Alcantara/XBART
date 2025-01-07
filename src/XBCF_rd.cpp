@@ -176,6 +176,8 @@ Rcpp::List XBCF_rd_cpp(arma::mat y, arma::mat Z, arma::mat X_con, arma::mat X_mo
     ////////////////////////////////////////////////////////////////
     mcmc_loop_xbcf_rd(Xorder_std_con, Xorder_std_mod, verbose, sigma0_draw_xinfo, sigma1_draw_xinfo, a_xinfo, b_xinfo, tau_con_xinfo, tau_mod_xinfo, trees_con, trees_mod, no_split_penalty, state, model, x_struct_con, x_struct_mod,
                     con_residuals, mod_residuals);
+    std::cout << "Number of times constraint 1 was rejected: " << model->count_fail_1 << "\n";
+    std::cout << "Number of times constraint 2 was rejected: " << model->count_fail_2 << "\n";
 
     // R Objects to Return
     Rcpp::NumericMatrix sigma0_draw(num_trees_con + num_trees_mod, num_sweeps); // save predictions of each tree
