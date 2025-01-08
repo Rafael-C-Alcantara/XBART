@@ -1,3 +1,4 @@
+set.seed(0)
 ## DGP
 n <- 5000
 ate <- 0.5
@@ -81,7 +82,7 @@ y <- prog + cate*z + rnorm(n,0,sig_error)
 ## Fit model
 p_categorical <- 0
 burnin <- 0
-num_sweeps <- 5
+num_sweeps <- 10
 Omin <- 1
 Opct <- 0.5
 ntrees_con <- 2
@@ -99,3 +100,9 @@ fit <- XBART::XBCF.rd(y[train], w[train,], x[train], c,
                       p_categorical_con = p_categorical,
                       p_categorical_mod = p_categorical,
                       tau_con = var(y[train])/ntrees_con, tau_mod = var(y[train])/ntrees_mod)
+fit$cutoff_nodes_con
+fit$invalid_nodes_1_con
+fit$invalid_nodes_2_con
+fit$cutoff_nodes_mod
+fit$invalid_nodes_1_mod
+fit$invalid_nodes_2_mod

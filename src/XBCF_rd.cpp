@@ -175,13 +175,21 @@ Rcpp::List XBCF_rd_cpp(arma::mat y, arma::mat Z, arma::mat X_con, arma::mat X_mo
 
     ////////////////////////////////////////////////////////////////
     // Vectors to store counts of constraint fails
-    /// 1: force split constraint
-    /// 2: points inside window constraint
+    /// 1: points inside window constraint
+    /// 2: force split constraint
     std::vector<size_t> count1_vec(num_sweeps,0);
     std::vector<size_t> count2_vec(num_sweeps,0);
+    ////////////////////////////////////////////////////////////////
+    // Vectors to store counts of X=c nodes (total, which break cond. i and which break cond. ii)
+    std::vector<std::vector<size_t>> cutoff_nodes_con;
+    std::vector<std::vector<size_t>> invalid_nodes_1_con;
+    std::vector<std::vector<size_t>> invalid_nodes_2_con;
+    std::vector<std::vector<size_t>> cutoff_nodes_mod;
+    std::vector<std::vector<size_t>> invalid_nodes_1_mod;
+    std::vector<std::vector<size_t>> invalid_nodes_2_mod;
     /// MCMC loop
     mcmc_loop_xbcf_rd(Xorder_std_con, Xorder_std_mod, verbose, sigma0_draw_xinfo, sigma1_draw_xinfo, a_xinfo, b_xinfo, tau_con_xinfo, tau_mod_xinfo, trees_con, trees_mod, no_split_penalty, state, model, x_struct_con, x_struct_mod,
-                    con_residuals, mod_residuals, count1_vec, count2_vec);
+                    con_residuals, mod_residuals, count1_vec, count2_vec, cutoff_nodes_con, invalid_nodes_1_con, invalid_nodes_2_con, cutoff_nodes_mod, invalid_nodes_1_mod, invalid_nodes_2_mod);
 
     // R Objects to Return
     Rcpp::NumericMatrix sigma0_draw(num_trees_con + num_trees_mod, num_sweeps); // save predictions of each tree
@@ -207,12 +215,21 @@ Rcpp::List XBCF_rd_cpp(arma::mat y, arma::mat Z, arma::mat X_con, arma::mat X_mo
     Rcpp::NumericVector count1_rcpp(num_sweeps, 0);
     
     Rcpp::NumericVector count2_rcpp(num_sweeps, 0);
+    
+    Rcpp::NumericMatrix cutoff_nodes_con_rcpp(num_sweeps,num_trees_con);
+    
+    Rcpp::NumericMatrix invalid_nodes_1_con_rcpp(num_sweeps,num_trees_con);
+    
+    Rcpp::NumericMatrix invalid_nodes_2_con_rcpp(num_sweeps,num_trees_con);
+    
+    Rcpp::NumericMatrix cutoff_nodes_mod_rcpp(num_sweeps,num_trees_mod);
+    
+    Rcpp::NumericMatrix invalid_nodes_1_mod_rcpp(num_sweeps,num_trees_mod);
+    
+    Rcpp::NumericMatrix invalid_nodes_2_mod_rcpp(num_sweeps,num_trees_mod);
 
     for (size_t i = 0; i < num_sweeps; i++)
     {
-      // Convert constraint fail count vectors to Rcpp
-      count1_rcpp(i) = count1_vec[i];
-      count2_rcpp(i) = count2_vec[i];
         for (size_t k = 0; k < N; k++){
             for (size_t j = 0; j < num_trees_con; j++)
             {
@@ -225,6 +242,25 @@ Rcpp::List XBCF_rd_cpp(arma::mat y, arma::mat Z, arma::mat X_con, arma::mat X_mo
         }
     }
     
+    // Storing the objects for monitoring the RDD constraints
+    for (size_t i = 0; i< num_sweeps; i++)
+    {
+      // Convert constraint fail count vectors to Rcpp
+      count1_rcpp(i) = count1_vec[i];
+      count2_rcpp(i) = count2_vec[i];
+      for (size_t j = 0; j < num_trees_con; j++)
+      {
+        cutoff_nodes_con_rcpp(i,j) = cutoff_nodes_con[i][j];
+        invalid_nodes_1_con_rcpp(i,j) = invalid_nodes_1_con[i][j];
+        invalid_nodes_2_con_rcpp(i,j) = invalid_nodes_2_con[i][j];
+      }
+      for (size_t j = 0; j < num_trees_mod; j++)
+      {
+        cutoff_nodes_mod_rcpp(i,j) = cutoff_nodes_mod[i][j];
+        invalid_nodes_1_mod_rcpp(i,j) = invalid_nodes_1_mod[i][j];
+        invalid_nodes_2_mod_rcpp(i,j) = invalid_nodes_2_mod[i][j];
+      }
+    }
     // copy from std vector to Rcpp Numeric Matrix objects
     Matrix_to_NumericMatrix(sigma0_draw_xinfo, sigma0_draw);
     Matrix_to_NumericMatrix(sigma1_draw_xinfo, sigma1_draw);
@@ -276,6 +312,12 @@ Rcpp::List XBCF_rd_cpp(arma::mat y, arma::mat Z, arma::mat X_con, arma::mat X_mo
         Rcpp::Named("residuals_con") = con_residuals_rcpp,
         Rcpp::Named("residuals_mod") = mod_residuals_rcpp,
         Rcpp::Named("count_fail_1") = count1_rcpp,
-        Rcpp::Named("count_fail_2") = count2_rcpp
+        Rcpp::Named("count_fail_2") = count2_rcpp,
+        Rcpp::Named("cutoff_nodes_con") = cutoff_nodes_con_rcpp,
+        Rcpp::Named("invalid_nodes_1_con") = invalid_nodes_1_con_rcpp,
+        Rcpp::Named("invalid_nodes_2_con") = invalid_nodes_2_con_rcpp,
+        Rcpp::Named("cutoff_nodes_mod") = cutoff_nodes_mod_rcpp,
+        Rcpp::Named("invalid_nodes_1_mod") = invalid_nodes_1_mod_rcpp,
+        Rcpp::Named("invalid_nodes_2_mod") = invalid_nodes_2_mod_rcpp
         );
 }

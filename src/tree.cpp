@@ -9,6 +9,101 @@ using namespace std;
 using namespace chrono;
 
 //--------------------
+// For RDD only
+/// check if node is used for prediction at X=c
+size_t tree::cutoff_node(XBCFrdModel *model) const
+{
+  if (l==0) // reached leaf node
+  {
+    double lmin, lmax, c, h;
+    lmin = this->suff_stat[6];
+    lmax = this->suff_stat[7];
+    c = model->cutoff;
+    h = model->Owidth;
+    if ((lmax >= c - h) & (lmin <= c + h))
+    {
+      return 1;
+    }
+    else
+    {
+      return 0;
+    }
+  }
+  else
+  {
+    return (l->cutoff_node(model) + r->cutoff_node(model));
+  }
+}
+/// check if node that is used for prediction at x=c breaks condition 1
+size_t tree::cutoff_node_breaks_1(XBCFrdModel *model) const
+{
+  if (l==0) // reached leaf node
+  {
+    double lmin, lmax, Ol, Or, c, h, Om;
+    lmin = this->suff_stat[6];
+    lmax = this->suff_stat[7];
+    Ol = this->suff_stat[4];
+    Or = this->suff_stat[5];
+    c = model->cutoff;
+    h = model->Owidth;
+    Om = model->Omin;
+    if ((lmax >= c - h) & (lmin <= c + h))
+    {
+      if ((Ol < Om) || (Or < Om))
+      {
+        return 1;
+      }
+      else
+      {
+        return 0;
+      }
+    }
+    else
+    {
+      return 0;
+    }
+  }
+  else
+  {
+    return (l->cutoff_node_breaks_1(model) + r->cutoff_node_breaks_1(model));
+  }
+}
+/// check if node that is used for prediction at x=c breaks condition 1
+size_t tree::cutoff_node_breaks_2(XBCFrdModel *model) const
+{
+  if (l==0) // reached leaf node
+  {
+    double lmin, lmax, Ol, Or, c, h, tot_cont, tot_treat, Op;
+    lmin = this->suff_stat[6];
+    lmax = this->suff_stat[7];
+    Ol = this->suff_stat[4];
+    Or = this->suff_stat[5];
+    c = model->cutoff;
+    h = model->Owidth;
+    tot_cont = this->suff_stat[2];
+    tot_treat = this->suff_stat[3];
+    Op = model->Opct;
+    if ((lmax >= c - h) & (lmin <= c + h))
+    {
+      if ((Ol+Or)/(tot_cont+tot_treat) < Op)
+      {
+        return 1;
+      }
+      else
+      {
+        return 0;
+      }
+    }
+    else
+    {
+      return 0;
+    }
+  }
+  else
+  {
+    return (l->cutoff_node_breaks_2(model) + r->cutoff_node_breaks_2(model));
+  }
+}
 // node id
 size_t tree::nid() const
 {

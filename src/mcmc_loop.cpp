@@ -615,7 +615,13 @@ void mcmc_loop_xbcf_rd( matrix<size_t> &Xorder_std_con,
                         matrix<std::vector<double>> &con_residuals,
                         matrix<std::vector<double>> &mod_residuals,
                         std::vector<size_t> &count1_vec,
-                        std::vector<size_t> &count2_vec
+                        std::vector<size_t> &count2_vec,
+                        std::vector<std::vector<size_t>> &cutoff_nodes_con,
+                        std::vector<std::vector<size_t>> &invalid_nodes_1_con,
+                        std::vector<std::vector<size_t>> &invalid_nodes_2_con,
+                        std::vector<std::vector<size_t>> &cutoff_nodes_mod,
+                        std::vector<std::vector<size_t>> &invalid_nodes_1_mod,
+                        std::vector<std::vector<size_t>> &invalid_nodes_2_mod
                         )
 {
     model->ini_tau_mu_fit(state);
@@ -631,6 +637,13 @@ void mcmc_loop_xbcf_rd( matrix<size_t> &Xorder_std_con,
 
         // prognostic forest
         model->set_treatmentflag(state, 0);
+        
+        std::vector<size_t> temp_cutoff_nodes_con(state.num_trees_con,0);
+        std::vector<size_t> temp_invalid_nodes_1_con(state.num_trees_con,0);
+        std::vector<size_t> temp_invalid_nodes_2_con(state.num_trees_con,0);
+        cutoff_nodes_con[sweeps] = temp_cutoff_nodes_con;
+        invalid_nodes_1_con[sweeps] = temp_invalid_nodes_1_con;
+        invalid_nodes_2_con[sweeps] = temp_invalid_nodes_2_con;
 
         for (size_t tree_ind = 0; tree_ind < state.num_trees_con; tree_ind++)
         {
@@ -671,6 +684,12 @@ void mcmc_loop_xbcf_rd( matrix<size_t> &Xorder_std_con,
 
             trees_con[sweeps][tree_ind].grow_from_root(state, Xorder_std_con, x_struct_con.X_counts, x_struct_con.X_num_unique, model, x_struct_con, sweeps, tree_ind);
             
+            //std::cout << "Nodes used for prediction: " << trees_con[sweeps][tree_ind].cutoff_node(model) << "\n";
+            //std::cout << "Invalid nodes (cond. i) used for prediction: " << trees_con[sweeps][tree_ind].cutoff_node_breaks_1(model) << "\n";
+            //std::cout << "Invalid nodes (cond. ii) used for prediction: " << trees_con[sweeps][tree_ind].cutoff_node_breaks_2(model) << "\n";
+            cutoff_nodes_con[sweeps][tree_ind] = trees_con[sweeps][tree_ind].cutoff_node(model);
+            invalid_nodes_1_con[sweeps][tree_ind] = trees_con[sweeps][tree_ind].cutoff_node_breaks_1(model);
+            invalid_nodes_2_con[sweeps][tree_ind] = trees_con[sweeps][tree_ind].cutoff_node_breaks_2(model);
             // store residuals:
             for (size_t data_ind = 0; data_ind < (*state.residual_std)[0].size(); data_ind++)
             {
@@ -710,6 +729,13 @@ void mcmc_loop_xbcf_rd( matrix<size_t> &Xorder_std_con,
 
         // treatment forest
         model->set_treatmentflag(state, 1);
+        
+        std::vector<size_t> temp_cutoff_nodes_mod(state.num_trees_mod,0);
+        std::vector<size_t> temp_invalid_nodes_1_mod(state.num_trees_mod,0);
+        std::vector<size_t> temp_invalid_nodes_2_mod(state.num_trees_mod,0);
+        cutoff_nodes_mod[sweeps] = temp_cutoff_nodes_mod;
+        invalid_nodes_1_mod[sweeps] = temp_invalid_nodes_1_mod;
+        invalid_nodes_2_mod[sweeps] = temp_invalid_nodes_2_mod;
 
         for (size_t tree_ind = 0; tree_ind < state.num_trees_mod; tree_ind++)
         {
@@ -750,6 +776,12 @@ void mcmc_loop_xbcf_rd( matrix<size_t> &Xorder_std_con,
 
             trees_mod[sweeps][tree_ind].grow_from_root(state, Xorder_std_mod, x_struct_mod.X_counts, x_struct_mod.X_num_unique, model, x_struct_mod, sweeps, tree_ind);
 
+            //std::cout << "Nodes used for prediction: " << trees_con[sweeps][tree_ind].cutoff_node(model) << "\n";
+            //std::cout << "Invalid nodes (cond. i) used for prediction: " << trees_con[sweeps][tree_ind].cutoff_node_breaks_1(model) << "\n";
+            //std::cout << "Invalid nodes (cond. ii) used for prediction: " << trees_con[sweeps][tree_ind].cutoff_node_breaks_2(model) << "\n";
+            cutoff_nodes_mod[sweeps][tree_ind] = trees_mod[sweeps][tree_ind].cutoff_node(model);
+            invalid_nodes_1_mod[sweeps][tree_ind] = trees_mod[sweeps][tree_ind].cutoff_node_breaks_1(model);
+            invalid_nodes_2_mod[sweeps][tree_ind] = trees_mod[sweeps][tree_ind].cutoff_node_breaks_2(model);
             // store residuals:
             for (size_t data_ind = 0; data_ind < (*state.residual_std)[0].size(); data_ind++)
             {

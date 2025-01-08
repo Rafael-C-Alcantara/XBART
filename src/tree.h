@@ -185,6 +185,12 @@ public:
     // node functions--------------------
 
     size_t nid() const; // nid of a node
+    
+    size_t cutoff_node(XBCFrdModel *model) const;
+    
+    size_t cutoff_node_breaks_1(XBCFrdModel *model) const;
+    
+    size_t cutoff_node_breaks_2(XBCFrdModel *model) const;
 
     char ntype(); // node type t:top, b:bot, n:no grandchildren i:interior (t can be b)
 
