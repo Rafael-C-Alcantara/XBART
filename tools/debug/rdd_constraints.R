@@ -1,6 +1,6 @@
 set.seed(0)
 ## DGP
-n <- 5000
+n <- 20000
 ate <- 0.5
 k1 <- 4 ## variability in mu0.x
 k2 <- 0.75 ## amplitude of tau0.w relative to ATE (set from 0 to 1)
@@ -82,11 +82,11 @@ y <- prog + cate*z + rnorm(n,0,sig_error)
 ## Fit model
 p_categorical <- 0
 burnin <- 0
-num_sweeps <- 10
+num_sweeps <- 100
 Omin <- 1
-Opct <- 0.5
-ntrees_con <- 2
-ntrees_mod <- 2
+Opct <- 0.3
+ntrees_con <- 5
+ntrees_mod <- 5
 Owidth <- h.grid(x,c,pts_in_window)
 sample <- 3*Owidth
 train <- c-sample < x & x < c+sample
@@ -106,3 +106,5 @@ fit$invalid_nodes_2_con
 fit$cutoff_nodes_mod
 fit$invalid_nodes_1_mod
 fit$invalid_nodes_2_mod
+colSums(fit$invalid_nodes_2_con)
+colSums(fit$invalid_nodes_2_mod)
