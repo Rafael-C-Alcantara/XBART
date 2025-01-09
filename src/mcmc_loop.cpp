@@ -641,9 +641,9 @@ void mcmc_loop_xbcf_rd( matrix<size_t> &Xorder_std_con,
         std::vector<size_t> temp_cutoff_nodes_con(state.num_trees_con,0);
         std::vector<size_t> temp_invalid_nodes_1_con(state.num_trees_con,0);
         std::vector<size_t> temp_invalid_nodes_2_con(state.num_trees_con,0);
-        cutoff_nodes_con[sweeps] = temp_cutoff_nodes_con;
-        invalid_nodes_1_con[sweeps] = temp_invalid_nodes_1_con;
-        invalid_nodes_2_con[sweeps] = temp_invalid_nodes_2_con;
+        cutoff_nodes_con.push_back(temp_cutoff_nodes_con);
+        invalid_nodes_1_con.push_back(temp_invalid_nodes_1_con);
+        invalid_nodes_2_con.push_back(temp_invalid_nodes_2_con);
 
         for (size_t tree_ind = 0; tree_ind < state.num_trees_con; tree_ind++)
         {
@@ -733,9 +733,9 @@ void mcmc_loop_xbcf_rd( matrix<size_t> &Xorder_std_con,
         std::vector<size_t> temp_cutoff_nodes_mod(state.num_trees_mod,0);
         std::vector<size_t> temp_invalid_nodes_1_mod(state.num_trees_mod,0);
         std::vector<size_t> temp_invalid_nodes_2_mod(state.num_trees_mod,0);
-        cutoff_nodes_mod[sweeps] = temp_cutoff_nodes_mod;
-        invalid_nodes_1_mod[sweeps] = temp_invalid_nodes_1_mod;
-        invalid_nodes_2_mod[sweeps] = temp_invalid_nodes_2_mod;
+        cutoff_nodes_mod.push_back(temp_cutoff_nodes_mod);
+        invalid_nodes_1_mod.push_back(temp_invalid_nodes_1_mod);
+        invalid_nodes_2_mod.push_back(temp_invalid_nodes_2_mod);
 
         for (size_t tree_ind = 0; tree_ind < state.num_trees_mod; tree_ind++)
         {

@@ -187,6 +187,7 @@ Rcpp::List XBCF_rd_cpp(arma::mat y, arma::mat Z, arma::mat X_con, arma::mat X_mo
     std::vector<std::vector<size_t>> cutoff_nodes_mod;
     std::vector<std::vector<size_t>> invalid_nodes_1_mod;
     std::vector<std::vector<size_t>> invalid_nodes_2_mod;
+    
     /// MCMC loop
     mcmc_loop_xbcf_rd(Xorder_std_con, Xorder_std_mod, verbose, sigma0_draw_xinfo, sigma1_draw_xinfo, a_xinfo, b_xinfo, tau_con_xinfo, tau_mod_xinfo, trees_con, trees_mod, no_split_penalty, state, model, x_struct_con, x_struct_mod,
                     con_residuals, mod_residuals, count1_vec, count2_vec, cutoff_nodes_con, invalid_nodes_1_con, invalid_nodes_2_con, cutoff_nodes_mod, invalid_nodes_1_mod, invalid_nodes_2_mod);
